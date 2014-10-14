@@ -1,4 +1,3 @@
-
 ///===========================================================================///
 /// An IP router with 2 interfaces.
 ///===========================================================================///
@@ -36,7 +35,7 @@ $private_address, $public_address, $default_gateway
 	c1[1] -> arpt;
 	arpt[1] -> [1]arpq1;
 	c1[2] -> Paint(2) -> ip;
-	
+
 	// Local delivery
 	rt[0] -> [2]output; 
 	
@@ -66,4 +65,7 @@ $private_address, $public_address, $default_gateway
 	gio1[1] -> ICMPError($public_address, parameterproblem) -> rt;
 	cp1[1] -> ICMPError($public_address, redirect, host) -> rt;
 
+
+    // Send advertisements to find mobile nodes
+    MobilityAgentAdvertiser(SRC_IP $public_address, INTERVAL 1) -> EtherEncap(0x0800, $private_address:eth, FF:FF:FF:FF:FF:FF) -> ToDump("temp.dump") -> [0]output;
 }
