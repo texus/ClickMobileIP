@@ -36,11 +36,11 @@ MobilityAgentAdvertiser::~MobilityAgentAdvertiser()
 int MobilityAgentAdvertiser::configure(Vector<String> &conf, ErrorHandler *errh) {
 
     if (cp_va_kparse(conf, this, errh,
-                "SRC_IP", cpkM, cpIPAddress, &_srcIp,
-                "INTERVAL", cpkM, cpUnsigned, &_interval,
-                "HOME_AGENT", cpkM, cpBool, &_homeAgent,
-                "FOREIGN_AGENT", cpkM, cpBool, &_foreignAgent,
-                cpEnd) < 0)
+                     "SRC_IP", cpkM, cpIPAddress, &_srcIp,
+                     "INTERVAL", cpkM, cpUnsigned, &_interval,
+                     "HOME_AGENT", cpkM, cpBool, &_homeAgent,
+                     "FOREIGN_AGENT", cpkM, cpBool, &_foreignAgent,
+                     cpEnd) < 0)
         return -1;
 
     if (!_homeAgent && !_foreignAgent)

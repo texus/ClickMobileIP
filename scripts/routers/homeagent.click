@@ -71,4 +71,11 @@ $private_address, $public_address, $default_gateway
         -> EtherEncap(0x0800, $private_address:eth, FF:FF:FF:FF:FF:FF)
         -> ToDump("TempHomeAgentAdvertisements.dump")
         -> [0]output;
+
+    /// TODO: Remove this
+    ICMPPingSource($public_address:ip, mobile_node_address:ip, INTERVAL 0.5)
+        -> Encapsulator(SRC_IP $public_address, DST_IP foreign_agent_public_address:ip)
+        -> EtherEncap(0x0800, $public_address:eth, foreign_agent_public_address:eth)
+        -> ToDump("temp.dump")
+        -> [0]output;
 }
