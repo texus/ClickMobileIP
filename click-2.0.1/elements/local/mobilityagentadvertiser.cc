@@ -114,8 +114,5 @@ void MobilityAgentAdvertiser::run_timer(Timer *) {
     _timer.schedule_after_msec(_interval*1000);
 }
 
-void MobilityAgentAdvertiser::push(int input, Packet *p){
-}
-
 CLICK_ENDDECLS
 EXPORT_ELEMENT(MobilityAgentAdvertiser)
