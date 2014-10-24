@@ -123,8 +123,8 @@ mobile_node[1]
 	-> EtherEncap(0x0800, mobile_node_address:eth, mobile_node_address:eth) /// The MAC addresses here can be dummy once, they are stripped of in the router. This is to make sure whe only need one input on the IPRouter1int
 	-> mobile_node;
 
-mobility_emulator :: MobilityEmulator(INTERVAL 5, CONNECTED_NETWORKS "2, 1");
-//mobility_emulator :: MobilityEmulator(CONNECTED_NETWORK 1);
+//mobility_emulator :: MobilityEmulator(INTERVAL 5, CONNECTED_NETWORKS "2, 1");
+mobility_emulator :: MobilityEmulator(CONNECTED_NETWORK 2);
 
 mobile_node[0]
 	-> [0]mobility_emulator[0]
