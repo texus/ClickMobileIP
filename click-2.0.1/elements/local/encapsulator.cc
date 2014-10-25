@@ -59,7 +59,7 @@ void Encapsulator::push(int, Packet* innerPacket) {
     iph->ip_dst.s_addr = _dstIp; // ip address of decapsulator
     iph->ip_sum = click_in_cksum((unsigned char*)packet->data(), packet->length());
 
-//    packet->set_dst_ip_anno(iph->ip_dst);  ///TODO: Needed?
+    packet->set_dst_ip_anno(iph->ip_dst);
 
     output(0).push(packet);
 }
