@@ -7,14 +7,17 @@ elementclass MobileNode
 {
 $addr_info, $gateway
 |
-	// Shared IP input path and routing table
-	ip :: Strip(14)
-	//-> IPPrint("test")
-	-> CheckIPHeader
-	-> rt :: StaticIPLookup(
-		$addr_info:ip/32 0,
-		$addr_info:ipnet 1,
-		0.0.0.0/0.0.0.0 $gateway 1);
+    // Shared IP input path and routing table
+    ip :: Strip(14)
+    //-> IPPrint("test")
+    -> CheckIPHeader
+    -> rt :: StaticIPLookup(
+        $addr_info:ip/32 0,
+        $addr_info:ipnet 1,
+//      0.0.0.0/0.0.0.0 $gateway 1); // TODO: Make this dynamic, gateway should be the router on which the mobile node is currently connected
+        0.0.0.0/0.0.0.0 foreign_agent_private_address:ip 1);
+
+    // foreign_agent_private_address:ip
 	
 	// ARP responses are copied to each ARPQuerier and the host.
 	arpt :: Tee(1);
