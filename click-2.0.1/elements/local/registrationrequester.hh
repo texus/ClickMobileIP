@@ -17,11 +17,11 @@ class RegistrationRequester : public Element {
 
 		const char *class_name() const { return "RegistrationRequester"; }
 		const char *port_count() const { return "1/1"; }
-		const char *processing() const { return PULL; }
+		const char *processing() const { return PUSH; }
 
 		int configure(Vector<String>&, ErrorHandler*);
 
-		Packet* pull(int);
+		void push(int, Packet*);
 	
 };
 
@@ -31,9 +31,9 @@ struct registration_request_header {
 									D (Decapsulation by Mobile Node), M (Minimal encapsulation), 
 									G (GRE decapsulation), r (0), T (reverse tunnelling), x (0) */ 
 	uint16_t lifetime;	/* 2-3 		Registration lifetime */
-	uint32_t home_addr; /* 4-7		IP-address of mobile node */
-	uint32_t home_agent;/* 8-11 	IP-address of mobile node's home agent */
-	uint32_t co_addr;	/* 12-15	IP-address for the end of the tunnel */	
+	in_addr home_addr; 	/* 4-7		IP-address of mobile node */
+	in_addr home_agent;	/* 8-11 	IP-address of mobile node's home agent */
+	in_addr co_addr;	/* 12-15	IP-address for the end of the tunnel */	
 	uint64_t id;		/* 16-23	Identification */
 };
 
