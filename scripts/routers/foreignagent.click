@@ -3,7 +3,7 @@
 /// An IP router with 2 interfaces.
 ///===========================================================================///
 
-elementclass ForeignAgent 
+elementclass ForeignAgent
 {
 $private_address, $public_address, $default_gateway
 |
@@ -15,10 +15,10 @@ $private_address, $public_address, $default_gateway
 		$public_address:ip/32 0,
 		$private_address:ipnet 1,
 		$public_address:ipnet $default_gateway 2);
-	
+
 	// ARP responses are copied to each ARPQuerier and the host.
 	arpt :: Tee(2);
-	
+
 	// Input and output paths for eth0
 	c0 :: Classifier(12/0806 20/0001, 12/0806 20/0002, -);
 	input[0] -> HostEtherFilter($private_address:eth) -> c0;
@@ -27,7 +27,7 @@ $private_address, $public_address, $default_gateway
 	c0[1] -> arpt;
 	arpt[0] -> [1]arpq0;
 	c0[2] -> Paint(1) -> ip;
-	
+
 	// Input and output paths for eth1
 	c1 :: Classifier(12/0806 20/0001, 12/0806 20/0002, -);
 	input[1] -> HostEtherFilter($public_address:eth) -> c1;
@@ -36,10 +36,22 @@ $private_address, $public_address, $default_gateway
 	c1[1] -> arpt;
 	arpt[1] -> [1]arpq1;
 	c1[2] -> Paint(2) -> ip;
-	
+
 	// Local delivery
-	rt[0] -> [2]output; 
-	
+	rt[0]
+	    -> checkIfEncapsulated :: CheckIfEncapsulated
+
+	checkIfEncapsulated[0]
+	    -> StripIPHeader
+	    -> CheckIPHeader
+
+	    // TODO: Somehow check if mobile node is here and send to it in a not-hardcoded way
+	    -> EtherEncap(0x0800, $private_address:eth, mobile_node_address:eth)
+
+	    -> [0]output;
+
+	checkIfEncapsulated[1] -> [2]output;
+
 	// Forwarding path for eth0
 	rt[1] -> DropBroadcasts
 	-> cp0 :: PaintTee(1)
@@ -52,7 +64,7 @@ $private_address, $public_address, $default_gateway
 	fr0[1] -> ICMPError($private_address, unreachable, needfrag) -> rt;
 	gio0[1] -> ICMPError($private_address, parameterproblem) -> rt;
 	cp0[1] -> ICMPError($private_address, redirect, host) -> rt;
-	
+
 	// Forwarding path for eth1
 	rt[2] -> DropBroadcasts
 	-> cp1 :: PaintTee(2)
@@ -69,6 +81,5 @@ $private_address, $public_address, $default_gateway
     // Send advertisements to find mobile nodes
     MobilityAgentAdvertiser(SRC_IP $public_address, INTERVAL 1, HOME_AGENT false, FOREIGN_AGENT true)
         -> EtherEncap(0x0800, $private_address:eth, FF:FF:FF:FF:FF:FF)
-        -> ToDump("TempForeignAgentAdvertisements.dump")
         -> [0]output;
 }
