@@ -11,13 +11,19 @@ $addr_info, $gateway
     ip :: Strip(14)
     //-> IPPrint("test")
     -> CheckIPHeader
-    -> rt :: StaticIPLookup(
+    -> rt :: LinearIPLookup(
         $addr_info:ip/32 0,
         $addr_info:ipnet 1,
-//      0.0.0.0/0.0.0.0 $gateway 1); // TODO: Make this dynamic, gateway should be the router on which the mobile node is currently connected
-        0.0.0.0/0.0.0.0 foreign_agent_private_address:ip 1);
+      0.0.0.0/0.0.0.0 $gateway 1);
 
-    // foreign_agent_private_address:ip
+    // Changes the default gateway
+    // TODO: Run this script to change the default gateway
+    //       This should be done when the mobile node is connected to another host
+    change_rt :: Script(TYPE PASSIVE, write rt.set 0.0.0.0/0.0.0.0 $1 1)
+
+    // TODO: REMOVE THIS!
+    //       It hardcodes that the mobile node is attached to the foreign agent
+    Script(write change_rt.run foreign_agent_private_address:ip)
 	
 	// ARP responses are copied to each ARPQuerier and the host.
 	arpt :: Tee(1);
