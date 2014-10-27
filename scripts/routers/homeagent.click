@@ -6,6 +6,8 @@ elementclass HomeAgent
 {
 $private_address, $public_address, $default_gateway
 |
+    infobase :: HomeAgentInfobase
+
 	// Shared IP input path and routing table
 	ip :: Strip(14)
 	-> CheckIPHeader
@@ -46,15 +48,13 @@ $private_address, $public_address, $default_gateway
 	    -> FixIPSrc($private_address)
 	    -> dt0 :: DecIPTTL
 	    -> fr0 :: IPFragmenter(1500)
-	    -> cl::IPClassifier(dst host mobile_node_address:ip, -);
-
-	// TODO: Detect if node is connected or not (this code assumes mobile node is at foreign agent)
-	cl[0]
-        -> Encapsulator(SRC_IP $public_address, DST_IP foreign_agent_public_address:ip)
-        -> arpq1;
-
-	cl[1]
+	    -> mobile_routing :: HomeAgentMobileNodeRouting(infobase)[0]
 	    -> [0]arpq0;
+
+	// The mobile node is not home, so tunnel the package to its care-of-address
+	mobile_routing[1]
+        -> Encapsulator(infobase, SRC_IP $public_address)
+        -> arpq1;
 
     dt0[1] -> ICMPError($private_address, timeexceeded) -> rt;
     fr0[1] -> ICMPError($private_address, unreachable, needfrag) -> rt;
@@ -73,7 +73,6 @@ $private_address, $public_address, $default_gateway
 	fr1[1] -> ICMPError($public_address, unreachable, needfrag) -> rt;
 	gio1[1] -> ICMPError($public_address, parameterproblem) -> rt;
 	cp1[1] -> ICMPError($public_address, redirect, host) -> rt;
-
 
     // Send advertisements to find mobile nodes
     MobilityAgentAdvertiser(SRC_IP $public_address, INTERVAL 1, HOME_AGENT true, FOREIGN_AGENT false)

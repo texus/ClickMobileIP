@@ -15,7 +15,7 @@ int RegistrationRequester::configure(Vector<String>& conf, ErrorHandler *errh) {
 	return 0;
 }
 
-void push(int, Packet *p) {
+void RegistrationRequester::push(int, Packet *p) {
 	// it is assumed that all incoming packets are advertisments // TODO should this be checked in element?
 
 	// check source of advertisements

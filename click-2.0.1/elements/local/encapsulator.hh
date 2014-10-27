@@ -3,6 +3,8 @@
 #include <click/element.hh>
 #include <click/timer.hh>
 
+#include "homeagentinfobase.hh"
+
 CLICK_DECLS
 
 class Encapsulator : public Element {
@@ -18,9 +20,12 @@ class Encapsulator : public Element {
 
 		void push(int, Packet*);
 
+    private:
+        in_addr get_destination_ip(in_addr mobileNodeAddress);
+
 	private:
+	    HomeAgentInfobase* _infobase;
 	    IPAddress _srcIp;
-        IPAddress _dstIp;
 };
 
 CLICK_ENDDECLS

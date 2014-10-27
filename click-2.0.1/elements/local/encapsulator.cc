@@ -14,8 +14,8 @@ Encapsulator::~Encapsulator()
 int Encapsulator::configure(Vector<String> &conf, ErrorHandler *errh) {
 
     if (cp_va_kparse(conf, this, errh,
+                     "INFOBASE", cpkP + cpkM, cpElement, &_infobase,
                      "SRC_IP", cpkM, cpIPAddress, &_srcIp,
-                     "DST_IP", cpkM, cpIPAddress, &_dstIp,
                      cpEnd) < 0)
         return -1;
 
@@ -56,12 +56,23 @@ void Encapsulator::push(int, Packet* innerPacket) {
     iph->ip_ttl = 200;
     iph->ip_p = 4; // protocol = IP-in-IP
     iph->ip_src.s_addr = _srcIp; // ip address of encapsulator
-    iph->ip_dst.s_addr = _dstIp; // ip address of decapsulator
+    iph->ip_dst = get_destination_ip(((click_ip*)innerPacket->data())->ip_dst); // ip address of decapsulator
     iph->ip_sum = click_in_cksum((unsigned char*)packet->data(), packet->length());
 
     packet->set_dst_ip_anno(iph->ip_dst);
 
     output(0).push(packet);
+}
+
+in_addr Encapsulator::get_destination_ip(in_addr mobileNodeAddress)
+{
+    for (unsigned int i = 0; i < _infobase->mobileNodesInfo.size(); ++i)
+    {
+        if (_infobase->mobileNodesInfo[i].address == mobileNodeAddress)
+            return _infobase->mobileNodesInfo[i].careOfAddress;
+    }
+
+    return mobileNodeAddress;
 }
 
 CLICK_ENDDECLS
