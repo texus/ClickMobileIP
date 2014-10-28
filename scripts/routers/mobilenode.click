@@ -7,6 +7,8 @@ elementclass MobileNode
 {
 $addr_info, $gateway
 |
+    infobase :: MobileNodeInfobase($gateway)
+
     // Shared IP input path and routing table
     ip :: Strip(14)
     //-> IPPrint("test")
@@ -14,8 +16,7 @@ $addr_info, $gateway
     -> rt :: StaticIPLookup(
         $addr_info:ip/32 0,
         $addr_info:ipnet 1,
-//      0.0.0.0/0.0.0.0 $gateway 1); // TODO: Make this dynamic, gateway should be the router on which the mobile node is currently connected
-        0.0.0.0/0.0.0.0 foreign_agent_private_address:ip 1);
+        0.0.0.0/0.0.0.0 $gateway 1);
 
     // foreign_agent_private_address:ip
 	
@@ -40,7 +41,9 @@ $addr_info, $gateway
 	-> FixIPSrc($addr_info)
 	-> dt0 :: DecIPTTL
 	-> fr0 :: IPFragmenter(1500)
+	-> MobileNodeRouting(infobase)
 	-> [0]arpq0;
+
 	dt0[1] -> ICMPError($addr_info, timeexceeded) -> rt;
 	fr0[1] -> ICMPError($addr_info, unreachable, needfrag) -> rt;
 	gio0[1] -> ICMPError($addr_info, parameterproblem) -> rt;

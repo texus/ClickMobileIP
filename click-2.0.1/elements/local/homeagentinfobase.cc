@@ -1,7 +1,6 @@
 #include <click/config.h>
 #include <click/confparse.hh>
 #include <click/error.hh>
-#include <clicknet/ether.h>
 #include "homeagentinfobase.hh"
 
 // TODO: REMOVE THESE INCLUDES TOGETHER WITH CODE IN CONSTRUCTOR
