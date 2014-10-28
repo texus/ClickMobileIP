@@ -26,7 +26,10 @@ void HomeAgentMobileNodeRouting::push(int, Packet* packet) {
     for (unsigned int i = 0; i < _infobase->mobileNodesInfo.size(); ++i)
     {
         if (_infobase->mobileNodesInfo[i].address == ((click_ip*)packet->data())->ip_dst)
+        {
             output(1).push(packet);
+            return;
+        }
     }
 
     output(0).push(packet);

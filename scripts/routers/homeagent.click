@@ -54,7 +54,7 @@ $private_address, $public_address, $default_gateway
 	// The mobile node is not home, so tunnel the package to its care-of-address
 	mobile_routing[1]
         -> Encapsulator(infobase, SRC_IP $public_address)
-        -> arpq1;
+        -> [0]arpq1;
 
     dt0[1] -> ICMPError($private_address, timeexceeded) -> rt;
     fr0[1] -> ICMPError($private_address, unreachable, needfrag) -> rt;
@@ -75,5 +75,5 @@ $private_address, $public_address, $default_gateway
 	cp1[1] -> ICMPError($public_address, redirect, host) -> rt;
 
     // Send advertisements to find mobile nodes
-    MobilityAgentAdvertiser(SRC_IP $public_address, INTERVAL 1, HOME_AGENT true, FOREIGN_AGENT false) -> [0]arpq0;
+    MobilityAgentAdvertiser(SRC_IP $private_address, INTERVAL 1, HOME_AGENT true, FOREIGN_AGENT false) -> [0]arpq0;
 }
