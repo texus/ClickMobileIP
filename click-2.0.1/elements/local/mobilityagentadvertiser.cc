@@ -46,7 +46,6 @@ void MobilityAgentAdvertiser::run_timer(Timer *) {
     }
 
     memset(packet->data(), 0, packet->length());
-    _sequenceNr++;
 
     click_ip* iph = (click_ip*)packet->data();
     iph->ip_v = 4;
@@ -88,6 +87,12 @@ void MobilityAgentAdvertiser::run_timer(Timer *) {
 
     // Calculate the ICMP header checksum
     advh->checksum = click_in_cksum((unsigned char*)advh, packetsize - sizeof(click_ip));
+
+    // Increment the sequence number
+    if (_sequenceNr < 0xffff)
+        _sequenceNr++;
+    else
+        _sequenceNr = 256;
 
     output(0).push(packet);
     _timer.schedule_after_msec(_interval*1000);

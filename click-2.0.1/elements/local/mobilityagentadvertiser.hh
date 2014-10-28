@@ -24,7 +24,7 @@ class MobilityAgentAdvertiser : public Element {
 		int _interval;
 		Timer _timer;
 
-		uint8_t _sequenceNr;
+		uint16_t _sequenceNr;
 
 		bool _homeAgent;
 		bool _foreignAgent;
