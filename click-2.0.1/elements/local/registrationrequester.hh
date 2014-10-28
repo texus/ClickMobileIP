@@ -22,6 +22,11 @@ class RegistrationRequester : public Element {
 		int configure(Vector<String>&, ErrorHandler*);
 
 		void push(int, Packet*);
+
+	private:
+		//home address
+		//home agent address (only one home agent)
+		//...
 	
 };
 
@@ -29,11 +34,11 @@ struct registration_request_header {
 	uint8_t type; 		/* 0		Type = 1 (Registration Request) */
 	uint8_t flags;		/* 1		Flags: S (Simultaneous bindings), B (Broadcast datagrams), 
 									D (Decapsulation by Mobile Node), M (Minimal encapsulation), 
-									G (GRE decapsulation), r (0), T (reverse tunnelling), x (0) */ 
+									G (GRE encapsulation), r (0), T (reverse tunnelling), x (0) */ 
 	uint16_t lifetime;	/* 2-3 		Registration lifetime */
-	in_addr home_addr; 	/* 4-7		IP-address of mobile node */
-	in_addr home_agent;	/* 8-11 	IP-address of mobile node's home agent */
-	in_addr co_addr;	/* 12-15	IP-address for the end of the tunnel */	
+	uint32_t home_addr; 	/* 4-7		IP-address of mobile node */
+	uint32_t home_agent;	/* 8-11 	IP-address of mobile node's home agent */
+	uint32_t co_addr;	/* 12-15	IP-address for the end of the tunnel */	
 	uint64_t id;		/* 16-23	Identification */
 };
 

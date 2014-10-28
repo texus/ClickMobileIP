@@ -10,6 +10,7 @@ CLICK_DECLS
 * @brief RegistrationReplier receives registration request and answers with acceptation or refusal.
 */
 class RegistrationReplier: public Element {
+public:
 	RegistrationReplier();
 	~RegistrationReplier();
 
@@ -20,15 +21,15 @@ class RegistrationReplier: public Element {
 	int configure(Vector<String>&, ErrorHandler*);
 
 	void pull(int, Packet*);
-}:
+};
 
 struct registration_reply_header {
-	uint8_t type		/* 0		Type = 3 (Registration Reply) */
-	uint8_t code		/* 1		Result of Registration Request */
-	uint16_t lifetime	/* 2_3		Number of seconds remaining before registration expired */
-	in_addr home_addr	/* 4-7		IP-address of mobile node */
-	in_addr home_agent	/* 8-11		IP-address of mobile node's home agent */
-	uint64_t id			/* 12-19 	Identification */
+	uint8_t type;		/* 0		Type = 3 (Registration Reply) */
+	uint8_t code;		/* 1		Result of Registration Request */
+	uint16_t lifetime;	/* 2_3		Number of seconds remaining before registration expired */
+	in_addr home_addr;	/* 4-7		IP-address of mobile node */
+	in_addr home_agent;	/* 8-11		IP-address of mobile node's home agent */
+	uint64_t id;		/* 12-19 	Identification */
 };
 
 CLICK_ENDDECLS

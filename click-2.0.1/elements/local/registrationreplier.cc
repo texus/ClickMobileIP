@@ -17,6 +17,7 @@ void push(int, Packet *p) {
 	// it is assumed that all incoming packets are registration requests // TODO should this be checked in element?
 	// read registration request
 	// decide to accept or deny
+	// if accepted, save info into homeagentinfobase
 	// send reply
 }
 
