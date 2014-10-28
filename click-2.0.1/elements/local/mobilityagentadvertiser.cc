@@ -60,7 +60,7 @@ void MobilityAgentAdvertiser::run_timer(Timer *) {
     iph->ip_dst.s_addr = 0xffffffff;
     iph->ip_sum = click_in_cksum((unsigned char*)packet->data(), packet->length());
 
-//    packet->set_dst_ip_anno(iph->ip_dst);  ///TODO: Needed?
+    packet->set_dst_ip_anno(iph->ip_dst);
 
     advertisement_header* advh = (advertisement_header*)(iph + 1);
     advh->type = 9;
