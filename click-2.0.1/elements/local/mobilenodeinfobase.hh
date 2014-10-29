@@ -1,6 +1,7 @@
 #ifndef CLICK_MOBILENODEINFOBASE_HH
 #define CLICK_MOBILENODEINFOBASE_HH
 #include <click/element.hh>
+#include <click/hashmap.hh>
 
 CLICK_DECLS
 
@@ -20,6 +21,8 @@ class MobileNodeInfobase : public Element {
 	    bool      connected;
 	    IPAddress foreignAgent;
 	    uint16_t  lifetime;
+
+	    HashMap<IPAddress, uint16_t> advertisementLifetimeInfo;
 };
 
 CLICK_ENDDECLS

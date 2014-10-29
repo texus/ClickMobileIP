@@ -62,8 +62,8 @@ void MobilityAgentAdvertiser::run_timer(Timer *) {
     packet->set_dst_ip_anno(iph->ip_dst);
 
     advertisement_header* advh = (advertisement_header*)(iph + 1);
-    advh->type = 9;
-    advh->code = 0;
+    advh->type = 9; // Router Advertisement
+    advh->code = 0; // Also handles normal routing
     advh->addresses = 1;
     advh->addr_size = 2;
     advh->lifetime = htons(0xffff); // TODO: Set to non-infinite lifetime

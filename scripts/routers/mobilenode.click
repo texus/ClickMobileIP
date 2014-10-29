@@ -7,6 +7,7 @@ elementclass MobileNode
 {
 $addr_info, $gateway
 |
+    // Stores the information that multiple elements need to access
     infobase :: MobileNodeInfobase($gateway)
 
     // Shared IP input path and routing table
@@ -18,8 +19,6 @@ $addr_info, $gateway
         $addr_info:ipnet 1,
         0.0.0.0/0.0.0.0 $gateway 1);
 
-    // foreign_agent_private_address:ip
-	
 	// ARP responses are copied to each ARPQuerier and the host.
 	arpt :: Tee(1);
 	
@@ -33,16 +32,22 @@ $addr_info, $gateway
 	c0[2] -> Paint(1) -> ip;
 		
 	// Local delivery
-	rt[0] -> [1]output; 
+	rt[0] -> [1]output;
 	
 	// Forwarding path for eth0
-	rt[1] -> DropBroadcasts
+	rt[1]
+	-> processAdvertisements :: ProcessAdvertisements(infobase)[0]
+	-> DropBroadcasts
 	-> gio0 :: IPGWOptions($addr_info)
 	-> FixIPSrc($addr_info)
 	-> dt0 :: DecIPTTL
 	-> fr0 :: IPFragmenter(1500)
 	-> MobileNodeRouting(infobase)
 	-> [0]arpq0;
+
+    processAdvertisements[1]
+//        -> RegistrationRequester  //< TODO
+        -> Discard
 
 	dt0[1] -> ICMPError($addr_info, timeexceeded) -> rt;
 	fr0[1] -> ICMPError($addr_info, unreachable, needfrag) -> rt;
