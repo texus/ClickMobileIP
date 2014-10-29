@@ -33,7 +33,7 @@ int MobilityAgentAdvertiser::configure(Vector<String> &conf, ErrorHandler *errh)
     }
 
     _timer.initialize(this);
-    _timer.schedule_after_msec(_interval*1000);
+    _timer.schedule_after_msec(_interval);
 
     return 0;
 }
@@ -78,7 +78,7 @@ void MobilityAgentAdvertiser::run_timer(Timer *) {
     madvh->type = 16;
     madvh->length = 6 + 4 * 1;
     madvh->seq_nr = htons(_sequenceNr);
-    madvh->lifetime = htons(4);
+    madvh->lifetime = htons(2);
     madvh->address = _srcIp; /// TODO: Should this really be the address of the router?
     madvh->flags =  (1 << 7) // Registration required
                   + (0 << 6) // Busy
@@ -101,7 +101,7 @@ void MobilityAgentAdvertiser::run_timer(Timer *) {
     output(0).push(packet);
 
     int rnd = (rand() % 200) - 100;
-    _timer.schedule_after_msec(_interval*1000 + rnd);
+    _timer.schedule_after_msec(_interval + rnd);
 }
 
 CLICK_ENDDECLS

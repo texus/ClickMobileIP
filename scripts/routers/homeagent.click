@@ -75,5 +75,5 @@ $private_address, $public_address, $default_gateway
 	cp1[1] -> ICMPError($public_address, redirect, host) -> rt;
 
     // Send advertisements to find mobile nodes
-    MobilityAgentAdvertiser(SRC_IP $private_address, INTERVAL 1, HOME_AGENT true, FOREIGN_AGENT false) -> [0]arpq0;
+    MobilityAgentAdvertiser(SRC_IP $private_address, INTERVAL 500, HOME_AGENT true, FOREIGN_AGENT false) -> [0]arpq0;
 }
