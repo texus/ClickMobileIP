@@ -1,3 +1,5 @@
+#include <time.h>
+#include <stdlib.h>
 #include <click/config.h>
 #include <click/confparse.hh>
 #include <click/error.hh>
@@ -7,7 +9,9 @@
 CLICK_DECLS
 MobilityAgentAdvertiser::MobilityAgentAdvertiser()
     : _interval(0), _timer(this), _sequenceNr(0)
-{}
+{
+    srand(time(NULL));
+}
 
 MobilityAgentAdvertiser::~MobilityAgentAdvertiser()
 {}
@@ -74,7 +78,7 @@ void MobilityAgentAdvertiser::run_timer(Timer *) {
     madvh->type = 16;
     madvh->length = 6 + 4 * 1;
     madvh->seq_nr = htons(_sequenceNr);
-    madvh->lifetime = htons(0xffff); // TODO: Set to non-infinite lifetime
+    madvh->lifetime = htons(4);
     madvh->address = _srcIp; /// TODO: Should this really be the address of the router?
     madvh->flags =  (1 << 7) // Registration required
                   + (0 << 6) // Busy
@@ -95,7 +99,9 @@ void MobilityAgentAdvertiser::run_timer(Timer *) {
         _sequenceNr = 256;
 
     output(0).push(packet);
-    _timer.schedule_after_msec(_interval*1000);
+
+    int rnd = (rand() % 200) - 100;
+    _timer.schedule_after_msec(_interval*1000 + rnd);
 }
 
 CLICK_ENDDECLS

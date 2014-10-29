@@ -67,8 +67,6 @@ void ProcessAdvertisements::run_timer(Timer* timer){
     Vector<IPAddress> elementToBeRemoved;
     for (HashMap<IPAddress, uint16_t>::iterator it = _infobase->advertisementLifetimeInfo.begin(); it != _infobase->advertisementLifetimeInfo.end(); ++it)
     {
-        click_chatter("%d", it.pair()->value);
-
         if (it.pair()->value > 1)
             it.pair()->value--;
         else // Lifetime expired
