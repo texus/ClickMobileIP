@@ -23,7 +23,7 @@ int MobileNodeRouting::configure(Vector<String> &conf, ErrorHandler *errh) {
 void MobileNodeRouting::push(int, Packet* packet) {
 
     // Send the package to the correct location
-    packet->set_dst_ip_anno(_infobase->connectedForeignAgent);
+    packet->set_dst_ip_anno(htonl(_infobase->foreignAgent));
 
     output(0).push(packet);
 }
