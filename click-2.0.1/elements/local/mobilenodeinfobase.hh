@@ -16,6 +16,8 @@ class MobileNodeInfobase : public Element {
 
 	public:
 	    IPAddress homeAgent;
+
+	    bool      connected;
 	    IPAddress foreignAgent;
 	    uint16_t  lifetime;
 };

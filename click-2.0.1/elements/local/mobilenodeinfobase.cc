@@ -4,7 +4,7 @@
 #include "mobilenodeinfobase.hh"
 
 CLICK_DECLS
-MobileNodeInfobase::MobileNodeInfobase()
+MobileNodeInfobase::MobileNodeInfobase() : connected(false)
 {}
 
 MobileNodeInfobase::~MobileNodeInfobase()
@@ -21,6 +21,7 @@ int MobileNodeInfobase::configure(Vector<String> &conf, ErrorHandler *errh) {
     foreignAgent = homeAgent;
 
     // TODO: REMOVE THIS WHEN NO LONGER HARDCODING MOBILE NODE POSITION
+    connected = true;
     foreignAgent = 0xC0A803FE;
     lifetime = 3;
 
