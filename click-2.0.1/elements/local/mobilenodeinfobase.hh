@@ -22,7 +22,7 @@ class MobileNodeInfobase : public Element {
 	    IPAddress foreignAgent;
 	    uint16_t  lifetime;
 
-	    HashMap<IPAddress, uint16_t> advertisementLifetimeInfo;
+	    HashMap<IPAddress, Packet*> advertisements;
 };
 
 CLICK_ENDDECLS

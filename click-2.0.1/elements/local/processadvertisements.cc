@@ -39,7 +39,11 @@ void ProcessAdvertisements::push(int, Packet* packet) {
             mobile_advertisement_header* madvh = (mobile_advertisement_header*)(advh + 1);
             if (madvh->type == 16)
             {
-                _infobase->advertisementLifetimeInfo.insert(madvh->address, ntohs(advh->lifetime));
+                HashMap<IPAddress, Packet*>::Pair* p = _infobase->advertisements.find_pair(madvh->address);
+                if (p != 0)
+                    p->value->kill();
+
+                _infobase->advertisements.insert(madvh->address, packet->clone());
                 output(1).push(packet);
                 return;
             }
@@ -65,17 +69,44 @@ void ProcessAdvertisements::run_timer(Timer* timer){
 
     // Decrease the lifetime of the stored advertisement messages
     Vector<IPAddress> elementToBeRemoved;
-    for (HashMap<IPAddress, uint16_t>::iterator it = _infobase->advertisementLifetimeInfo.begin(); it != _infobase->advertisementLifetimeInfo.end(); ++it)
+    for (HashMap<IPAddress, Packet*>::iterator it = _infobase->advertisements.begin(); it != _infobase->advertisements.end(); ++it)
     {
-        if (it.pair()->value > 1)
-            it.pair()->value--;
+        click_ip* iph = (click_ip*)it.pair()->value->data();
+        advertisement_header* advh = (advertisement_header*)(iph + 1);
+
+        if (advh->lifetime > 1)
+            advh->lifetime--;
         else // Lifetime expired
             elementToBeRemoved.push_back(it.pair()->key);
     }
 
     // Remove the advertisement messages of which the lifetime has reached 0
+    bool connectedAgentUnavailable = false;
     for (Vector<IPAddress>::const_iterator it = elementToBeRemoved.begin(); it != elementToBeRemoved.end(); ++it)
-        _infobase->advertisementLifetimeInfo.erase(*it);
+    {
+        if ((_infobase->connected) && (_infobase->foreignAgent == *it))
+            connectedAgentUnavailable = true;
+
+        _infobase->advertisements.erase(*it);
+    }
+
+    // Try to connect with another agent when no longer receiving advertisements from currently connected one
+    if (connectedAgentUnavailable)
+    {
+        if (_infobase->advertisements.empty())
+        {
+            // TODO
+            // We do not have any advertisements cached
+            // Send an "agent solicitation"
+            // (output 2)
+        }
+        else
+        {
+            // Just connect to the first router advertisement that we still have in the cache
+            // TODO: Should we look for the one with the highest lifetime instead?
+            output(1).push(_infobase->advertisements.begin().pair()->value);
+        }
+    }
 
     timer->schedule_after_msec(1000);
 }

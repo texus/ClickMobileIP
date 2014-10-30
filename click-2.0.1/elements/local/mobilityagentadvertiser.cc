@@ -70,7 +70,7 @@ void MobilityAgentAdvertiser::run_timer(Timer *) {
     advh->code = 0; // Also handles normal routing
     advh->addresses = 1;
     advh->addr_size = 2;
-    advh->lifetime = htons(0xffff); // TODO: Set to non-infinite lifetime
+    advh->lifetime = htons(2);
     advh->address = _srcIp;
     advh->addrPreference = 0;
 
@@ -78,7 +78,7 @@ void MobilityAgentAdvertiser::run_timer(Timer *) {
     madvh->type = 16;
     madvh->length = 6 + 4 * 1;
     madvh->seq_nr = htons(_sequenceNr);
-    madvh->lifetime = htons(2);
+    madvh->lifetime = htons(0xffff); // TODO: Set to non-infinite lifetime
     madvh->address = _srcIp; /// TODO: Should this really be the address of the router?
     madvh->flags =  (1 << 7) // Registration required
                   + (0 << 6) // Busy

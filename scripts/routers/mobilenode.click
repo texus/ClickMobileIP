@@ -49,6 +49,10 @@ $addr_info, $gateway
 //        -> RegistrationRequester  //< TODO
         -> Discard
 
+    processAdvertisements[2]
+//        -> AgentSolicitation  //< TODO
+        -> Discard
+
 	dt0[1] -> ICMPError($addr_info, timeexceeded) -> rt;
 	fr0[1] -> ICMPError($addr_info, unreachable, needfrag) -> rt;
 	gio0[1] -> ICMPError($addr_info, parameterproblem) -> rt;
