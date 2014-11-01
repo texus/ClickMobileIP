@@ -14,7 +14,7 @@ RegistrationRequester::~RegistrationRequester() {}
 
 int RegistrationRequester::configure(Vector<String>& conf, ErrorHandler *errh) {
 	if (cp_va_kparse(conf, this, errh, 
-			"INFOBASE", cpkP + cpkM, cpElement, &m_infobase, 
+			"INFOBASE", cpkP + cpkM, cpElement, &_infobase, 
 			cpEnd) < 0) 
 		return -1; //TODO add constructor arguments
 	return 0;
@@ -38,7 +38,7 @@ void RegistrationRequester::push(int, Packet *p) {
 	in_addr adv_src_addr = adv_iph->ip_src;
 
 	// Check if in home network
-	if(adv_src_addr == m_infobase.homeAgent) {
+	if(adv_src_addr == _infobase->homeAgent) {
 		// if yes check if deregistration necessary //TODO!
 		click_chatter("Mobile node home");
 	}
@@ -77,7 +77,7 @@ void RegistrationRequester::push(int, Packet *p) {
 	//TODO ip-id necessary?
 	ip_head->ip_ttl = 20; //TODO calculate reasonable TTL + set to 1 if broadcasting request to all mobile agents
 	ip_head->ip_p = 17; //UDP protocol
-	ip_head->ip_src = m_infobase.homeAddress; // Home address is assumed to be known in this project
+	ip_head->ip_src = _infobase->homeAddress; // Home address is assumed to be known in this project
 	ip_head->ip_dst = adv_src_addr; //TODO if foreign agent IP-address is not known, set to 255.255.255.255 ("all mobility agents")
 	ip_head->ip_sum = click_in_cksum((unsigned char*)packet->data(), packet->length()); // Add ip checksum
 
@@ -112,11 +112,13 @@ void RegistrationRequester::push(int, Packet *p) {
 	req_head->lifetime = adv_lifetime;
 
 	//Set home address 
-	req_head->home_addr = m_infobase.homeAddress.addr();
-	req_head->home_agent = m_infobase.homeAgent.addr(); //TODO discover home agent when not known
+	req_head->home_addr = _infobase->homeAddress.addr();
+	req_head->home_agent = _infobase->homeAgent.addr(); //TODO discover home agent when not known
 	req_head->co_addr = adv_mobileh->address; //TODO when deregistering all COAs, set to home address
 
 	//TODO identification field?
+
+	//TODO add info to pending_requests
 	output(0).push(packet);
 
 }
