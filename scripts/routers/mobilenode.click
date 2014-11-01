@@ -8,7 +8,7 @@ elementclass MobileNode
 $addr_info, $gateway
 |
     // Stores the information that multiple elements need to access
-    infobase :: MobileNodeInfobase($gateway)
+    infobase :: MobileNodeInfobase($gateway, $addr_info)
 
     // Shared IP input path and routing table
     ip :: Strip(14)
@@ -46,7 +46,7 @@ $addr_info, $gateway
 	-> [0]arpq0;
 
     processAdvertisements[1]
-//        -> RegistrationRequester  //< TODO
+        -> RegistrationRequester(infobase)
         -> Discard
 
     processAdvertisements[2]

@@ -17,6 +17,7 @@ class MobileNodeInfobase : public Element {
 
 	public:
 	    IPAddress homeAgent;
+		IPAddress homeAddress;
 
 	    bool      connected;
 	    IPAddress foreignAgent;

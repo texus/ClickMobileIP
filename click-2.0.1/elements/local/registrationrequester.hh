@@ -2,6 +2,7 @@
 #define CLICK_REGISTRATION_REQUESTER_HH
 
 #include <click/element.hh>
+#include "mobilenodeinfobase.hh"
 
 CLICK_DECLS
 
@@ -24,9 +25,23 @@ class RegistrationRequester : public Element {
 		void push(int, Packet*);
 
 	private:
+		MobileNodeInfobase m_infobase;
 		//home address
+		//in_addr home_address;
 		//home agent address (only one home agent)
-		//...
+		//in_addr home_agent; // Not necessarily known // TODO: make discovering possible
+		//home agent netmask //TODO each mobile node should be configured with this
+		//pending requests //TODO
+		/*
+		For each pending request:
+			- link-layer address of the foreign agent to which the Registration Request was sent, if applicable
+			- IP destination address of the Registration Request
+			- COA used in the registration
+			- identification value sent in registration (//TODO how to implement this without security?)
+			- originally requested lifetime
+			- remaining lifetime of pending registration
+		*/
+		// mobile_node_infobase ... // TODO add this
 	
 };
 
