@@ -3,6 +3,7 @@
 #include <click/error.hh>
 #include <clicknet/ether.h>
 #include <clicknet/ip.h>
+#include <clicknet/udp.h>
 #include "registrationrequester.hh"
 #include "mobilityagentadvertiser.hh"
 
@@ -21,7 +22,6 @@ int RegistrationRequester::configure(Vector<String>& conf, ErrorHandler *errh) {
 }
 
 void RegistrationRequester::push(int, Packet *p) {
-	
 	// It is assumed that all incoming packets are advertisments //TODO other methods of discovering FA's
 	click_chatter("Got an advertisment packet.");
 
@@ -30,28 +30,53 @@ void RegistrationRequester::push(int, Packet *p) {
 	click_udp *adv_udp = (click_udp*)p->data(); //TODO is this used here?
 	mobile_advertisement_header *adv_mobileh = (mobile_advertisement_header*)p->data();
 	advertisement_header *adv_advh = (advertisement_header*)p->data();
-
-	//TODO kill advertisments or discard them to an output[1]?
-	p->kill();
+	//TODO discard to an output[1]?
+	//p->kill();
 
 	// Check source address of advertisement
 	in_addr adv_src_addr = adv_iph->ip_src;
-
 	// Check if in home network
 	if(adv_src_addr == _infobase->homeAgent) {
-		// if yes check if deregistration necessary //TODO!
-		click_chatter("Mobile node home");
+		if(_infobase->foreignAgent != _infobase->homeAgent) {
+			// send deregistration request
+			click_chatter("Deregistering mobile node");
+			Packet *packet = createRequest(adv_src_addr, 0, _infobase->homeAddress);
+			if(packet != 0){
+				output(0).push(packet);
+			}
+		}
 	}
 	else {
 		click_chatter("Mobile node not home");
-		// Check advertised COA
+		// Check if advertised COA = current COA
 		uint32_t adv_co_addr = adv_mobileh->address;
-		// If same as current COA, check if registration almost expired + reset time since last received advertisement from current COA
-		// If yes, RESEND request
-		// If not, check if still receiving advertisements from current COA
-		// If yes, do nothing
-		// If not, send request to new COA
+		if(adv_co_addr = _infobase->foreignAgent) {
+			//TODO check time until registration expired
+			//TODO set time since last advertisement from current COA = 0
+		}
+		else {
+			//TODO check time since last advertisement from current COA
+			// if too long ago, send request to new COA
+			click_chatter("Registering mobile node with new COA");
+			Packet *packet = createRequest(adv_src_addr, adv_mobileh->lifetime, adv_co_addr);
+			if(packet != 0) {
+				output(0).push(packet);
+			}
+		}
 	}
+}
+
+Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, uint32_t co_addr) {
+
+	//TODO add info to pending_requests
+	pending_request new_req;
+	//TODO save link layer address for foreign agent?
+	new_req.ip_dst = ip_dst;
+	new_req.co_addr = co_addr;
+	//TODO id?
+	new_req.requested_lifetime = lifetime;
+	new_req.remaining_lifetime = lifetime;
+	_pending.push_back(new_req);
 
 	// Make the registration request packet
 	int packet_size = sizeof(click_ip) /*+ sizeof(click_udp) */+ sizeof(registration_request_header);
@@ -62,35 +87,37 @@ void RegistrationRequester::push(int, Packet *p) {
 	// Check if packet correctly created
 	if(packet == 0) {
 		click_chatter("Could not make packet");
-		return;
+		return 0;
 	}
 
-    memset(packet->data(), 0, packet->length());
+	memset(packet->data(), 0, packet->length());
 
 	// add the IP header
 	click_ip *ip_head = (click_ip*)packet->data();
 	// set IP fields to correct values
 	ip_head->ip_v = 4;
 	ip_head->ip_hl = 5; //TODO check if this is correct
-	ip_head->ip_tos = 0; //TODO check if really best effort tos
+	ip_head->ip_tos = 0; // Best-Effort
 	ip_head->ip_len = htons(packet_size);
 	//TODO ip-id necessary?
-	ip_head->ip_ttl = 20; //TODO calculate reasonable TTL + set to 1 if broadcasting request to all mobile agents
+	ip_head->ip_ttl = 64; //TODO set to 1 if broadcasting request to all mobile agents
 	ip_head->ip_p = 17; //UDP protocol
 	ip_head->ip_src = _infobase->homeAddress; // Home address is assumed to be known in this project
-	ip_head->ip_dst = adv_src_addr; //TODO if foreign agent IP-address is not known, set to 255.255.255.255 ("all mobility agents")
-	ip_head->ip_sum = click_in_cksum((unsigned char*)packet->data(), packet->length()); // Add ip checksum
+	ip_head->ip_dst = ip_dst; //TODO if foreign agent IP-address is not known, set to 255.255.255.255 ("all mobility agents")
+	ip_head->ip_sum = click_in_cksum((unsigned char*)ip_head, sizeof(click_ip));
+	// set destination in annotation
+	packet->set_dst_ip_anno(ip_head->ip_dst);
 
 	// add the UDP header
-	//click_udp *udp_head = (click_udp*)packet->data();
+	click_udp *udp_head = (click_udp*)packet->data();
 	//udp_head->uh_sport = ?? //TODO From which port are requests sent?
-	//udp_head->uh_dport = 434; // Destination port for registration requests is 434
+	//udp_head->uh_dport = htons(434); // Destination port for registration requests is 434
 	//uint16_t len = packet->length() - sizeof(click_ip) - sizeof(registration_request_header);
 	//udp_head->uh_ulen = htons(len);
-	//TODO UDP checksum
+	//udp_head->uh_usum = 0;
 
 	// add Mobile IP fields
-	registration_request_header *req_head = (registration_request_header*)packet->data();
+	registration_request_header *req_head = (registration_request_header*)(udp_head+1);
 
 	// Set type
 	req_head->type = 1; //Type = 1 (Registration Request)
@@ -105,22 +132,16 @@ void RegistrationRequester::push(int, Packet *p) {
 						+ 0;		// x, always sent as 0
 
 	// Set lifetime
-	// If specified in advertisement, use this
-	// When deregistering, use 0
-	// Otherwise, use default ICMP Router Advertisement // TODO make this adjustable
-	uint16_t adv_lifetime = adv_mobileh->lifetime;
-	req_head->lifetime = adv_lifetime;
+	req_head->lifetime = lifetime; //TODO If not specified in advertisement, use (ADJUSTABLE) default ICMP Router Advertisement lifetime 
 
 	//Set home address 
 	req_head->home_addr = _infobase->homeAddress.addr();
 	req_head->home_agent = _infobase->homeAgent.addr(); //TODO discover home agent when not known
-	req_head->co_addr = adv_mobileh->address; //TODO when deregistering all COAs, set to home address
+	req_head->co_addr = co_addr;
 
 	//TODO identification field?
 
-	//TODO add info to pending_requests
-	output(0).push(packet);
-
+	return packet;
 }
 
 CLICK_ENDDECLS

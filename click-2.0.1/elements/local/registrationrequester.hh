@@ -6,6 +6,19 @@
 
 CLICK_DECLS
 
+struct pending_request {
+	// link-layer address if applicable //TODO when applicable?
+	// IP destination address of request
+	in_addr ip_dst;
+	// COA used in registration
+	uint32_t co_addr;
+	// identification value sent in registration //TODO implement without security?
+	// originally requested lifetime
+	uint16_t requested_lifetime;
+	// remaining lifetime
+	uint16_t remaining_lifetime;
+};
+
 /**
 *
 * @brief RegistrationRequester receives MobilityAdvertisements and (if necessary) sends
@@ -26,16 +39,10 @@ class RegistrationRequester : public Element {
 
 	private:
 		MobileNodeInfobase *_infobase;
-		//pending requests //TODO
-		/*
-		For each pending request:
-			- link-layer address of the foreign agent to which the Registration Request was sent, if applicable
-			- IP destination address of the Registration Request
-			- COA used in the registration
-			- identification value sent in registration (//TODO how to implement this without security?)
-			- originally requested lifetime
-			- remaining lifetime of pending registration
-		*/	
+		Vector<pending_request> _pending;
+		//Timer _time_since_last_adv; //!< Time since mobile node received last advertisement from current COA. Initialized to inf
+
+		Packet* createRequest(in_addr ip_dst, uint16_t lifetime, uint32_t co_addr);
 };
 
 struct registration_request_header {
