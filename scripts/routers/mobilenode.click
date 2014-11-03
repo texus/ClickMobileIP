@@ -47,11 +47,11 @@ $addr_info, $gateway
 
     processAdvertisements[1]
         -> RegistrationRequester(infobase)
-        -> Discard
+        -> [0]arpq0;
 
-    processAdvertisements[2]
-//        -> AgentSolicitation  //< TODO
-        -> Discard
+    // Send agent solicitations when not connected and there are no advertisements
+    AgentSolicitation(infobase, SRC_IP $addr_info:ip)
+        -> [0]arpq0;
 
 	dt0[1] -> ICMPError($addr_info, timeexceeded) -> rt;
 	fr0[1] -> ICMPError($addr_info, unreachable, needfrag) -> rt;

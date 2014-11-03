@@ -73,34 +73,34 @@ void ProcessAdvertisements::run_timer(Timer* timer){
     {
         click_ip* iph = (click_ip*)it.pair()->value->data();
         advertisement_header* advh = (advertisement_header*)(iph + 1);
+        uint16_t lifetime = ntohs(advh->lifetime);
 
-        if (advh->lifetime > 1)
-            advh->lifetime--;
+        if (lifetime > 1)
+        {
+            lifetime--;
+            advh->lifetime = htons(lifetime);
+        }
         else // Lifetime expired
             elementToBeRemoved.push_back(it.pair()->key);
     }
 
     // Remove the advertisement messages of which the lifetime has reached 0
-    bool connectedAgentUnavailable = false;
-    for (Vector<IPAddress>::const_iterator it = elementToBeRemoved.begin(); it != elementToBeRemoved.end(); ++it)
+    bool connectedAgentUnavailable = !_infobase->connected;
+    if (_infobase->connected)
     {
-        if ((_infobase->connected) && (_infobase->foreignAgent == *it))
-            connectedAgentUnavailable = true;
+        for (Vector<IPAddress>::const_iterator it = elementToBeRemoved.begin(); it != elementToBeRemoved.end(); ++it)
+        {
+            if (_infobase->foreignAgent == *it)
+                connectedAgentUnavailable = true;
 
-        _infobase->advertisements.erase(*it);
+            _infobase->advertisements.erase(*it);
+        }
     }
 
     // Try to connect with another agent when no longer receiving advertisements from currently connected one
     if (connectedAgentUnavailable)
     {
-        if (_infobase->advertisements.empty())
-        {
-            // TODO
-            // We do not have any advertisements cached
-            // Send an "agent solicitation"
-            // (output 2)
-        }
-        else
+        if (!_infobase->advertisements.empty())
         {
             // Just connect to the first router advertisement that we still have in the cache
             // TODO: Should we look for the one with the highest lifetime instead?
