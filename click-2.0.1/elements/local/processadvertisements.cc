@@ -44,7 +44,14 @@ void ProcessAdvertisements::push(int, Packet* packet) {
                     p->value->kill();
 
                 _infobase->advertisements.insert(madvh->address, packet->clone());
-                output(1).push(packet);
+
+                // If there is no connection yet then try to connect to this agent
+                if (!_infobase->connected)
+                {
+                    _lastRegistrationAttempt.assign_now();
+                    output(1).push(packet);
+                }
+
                 return;
             }
         }
@@ -62,6 +69,8 @@ void ProcessAdvertisements::run_timer(Timer* timer){
 
         if (_infobase->lifetime == 0)
         {
+            _infobase->connected = false;
+
             /// TODO: Should we do something here?
             ///       Our registration is no longer valid.
         }
@@ -86,22 +95,21 @@ void ProcessAdvertisements::run_timer(Timer* timer){
 
     // Remove the advertisement messages of which the lifetime has reached 0
     bool connectedAgentUnavailable = !_infobase->connected;
-    if (_infobase->connected)
+    for (Vector<IPAddress>::const_iterator it = elementToBeRemoved.begin(); it != elementToBeRemoved.end(); ++it)
     {
-        for (Vector<IPAddress>::const_iterator it = elementToBeRemoved.begin(); it != elementToBeRemoved.end(); ++it)
-        {
-            if (_infobase->foreignAgent == *it)
-                connectedAgentUnavailable = true;
+        if ((_infobase->connected) && (_infobase->foreignAgent == *it))
+            connectedAgentUnavailable = true;
 
-            _infobase->advertisements.erase(*it);
-        }
+        _infobase->advertisements.erase(*it);
     }
 
     // Try to connect with another agent when no longer receiving advertisements from currently connected one
     if (connectedAgentUnavailable)
     {
-        if (!_infobase->advertisements.empty())
+        if ((!_infobase->advertisements.empty()) && (_lastRegistrationAttempt + Timestamp::make_sec(1) < Timestamp::now()))
         {
+            _lastRegistrationAttempt.assign_now();
+
             // Just connect to the first router advertisement that we still have in the cache
             // TODO: Should we look for the one with the highest lifetime instead?
             output(1).push(_infobase->advertisements.begin().pair()->value);

@@ -24,6 +24,8 @@ class AgentSolicitation : public Element {
 	    MobileNodeInfobase* _infobase;
 	    IPAddress _srcIp;
 	    Timer _timer;
+
+	    unsigned int _messagesSendInRow;
 };
 
 struct agent_solicitation_header {
