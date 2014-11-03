@@ -23,7 +23,7 @@ int AgentSolicitation::configure(Vector<String> &conf, ErrorHandler *errh) {
         return -1;
 
     _timer.initialize(this);
-    _timer.schedule_after_msec(1000);
+    _timer.schedule_after_msec(10); // Let the mobile node send a solicitation message when it starts
     return 0;
 }
 

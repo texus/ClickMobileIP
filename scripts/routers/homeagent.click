@@ -8,6 +8,8 @@ $private_address, $public_address, $default_gateway
 |
     infobase :: HomeAgentInfobase
 
+    mobilityAgentAdvertiser :: MobilityAgentAdvertiser(SRC_IP $private_address, INTERVAL 500, HOME_AGENT true, FOREIGN_AGENT false)
+
 	// Shared IP input path and routing table
 	ip :: Strip(14)
 	-> CheckIPHeader
@@ -22,12 +24,21 @@ $private_address, $public_address, $default_gateway
 
 	// Input and output paths for eth0
 	c0 :: Classifier(12/0806 20/0001, 12/0806 20/0002, -);
-	input[0] -> HostEtherFilter($private_address:eth) -> c0;
+	input[0]
+	    -> checkIfAgentSolicitation :: CheckIfAgentSolicitation[1]
+	    -> HostEtherFilter($private_address:eth)
+	    -> c0;
+
 	c0[0] -> ar0 :: ARPResponder($private_address) -> [0]output;
 	arpq0 :: ARPQuerier($private_address) -> [0]output;
 	c0[1] -> arpt;
 	arpt[0] -> [1]arpq0;
 	c0[2] -> Paint(1) -> ip;
+
+	// Respond to agent solicitations
+    checkIfAgentSolicitation[0]
+	    -> mobilityAgentAdvertiser
+	    -> [0]arpq0
 
 	// Input and output paths for eth1
 	c1 :: Classifier(12/0806 20/0001, 12/0806 20/0002, -);
@@ -75,5 +86,5 @@ $private_address, $public_address, $default_gateway
 	cp1[1] -> ICMPError($public_address, redirect, host) -> rt;
 
     // Send advertisements to find mobile nodes
-    MobilityAgentAdvertiser(SRC_IP $private_address, INTERVAL 500, HOME_AGENT true, FOREIGN_AGENT false) -> [0]arpq0;
+    mobilityAgentAdvertiser -> [0]arpq0;
 }

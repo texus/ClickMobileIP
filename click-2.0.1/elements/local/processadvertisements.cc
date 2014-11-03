@@ -24,12 +24,8 @@ int ProcessAdvertisements::configure(Vector<String> &conf, ErrorHandler *errh) {
     return 0;
 }
 
-void ProcessAdvertisements::push(int, Packet* packet) {
-
-    StringAccum sa(packet->length());
-    for (unsigned int i = 0; i < packet->length(); ++i)
-        sa << packet->data()[i];
-
+void ProcessAdvertisements::push(int, Packet* packet)
+{
     click_ip* iph = (click_ip*)packet->data();
     if (iph->ip_p == 1) // ICMP packet
     {
