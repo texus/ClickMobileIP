@@ -34,11 +34,11 @@ void push(int, Packet *p) {
 	click_ip *ip_head = (click_ip*)packet->data();
 	ip_head->ip_v = 4;
 	ip_head->ip_hl = 5; //TODO check if this is correct
-	ip_head->ip_tos = 0 // Best-Effort
+	ip_head->ip_tos = 0; // Best-Effort
 	ip_head->ip_len = htons(packet_size);
 	//ip_head->ip_id //TODO necessary?
 	ip_head->ip_ttl = 64;
-	ip_head->ip_p = 17 // UDP protocol
+	ip_head->ip_p = 17; // UDP protocol
 	ip_head->ip_src = req_ip->ip_dst; // copied from destination address of the Registration Request //TODO see section 3.7.2.3, 3.8.3.1
 	ip_head->ip_dst = req_ip->ip_src; // copied form source address of Registration Request to wich agent is replying	
 	ip_head->ip_sum = click_in_cksum((unsigned char*)ip_head, sizeof(click_ip));
@@ -47,7 +47,7 @@ void push(int, Packet *p) {
 	packet->set_dst_ip_anno(ip_head->ip_dst);
 
 	// add UDP header
-	click_udp *up_head = (click_udp*)packet->data();
+	click_udp *udp_head = (click_udp*)packet->data();
 	//udp_head->uh_sport = ? //TODO from which port?
 	udp_head->uh_dport = req_udp->uh_sport; // copied from source port of corresponding Registration Request
 	uint16_t len = packet->length() - sizeof(click_ip);
@@ -55,7 +55,7 @@ void push(int, Packet *p) {
 	udp_head->uh_sum = 0; //TODO non-zero UDP checksum?
 
 	// add mobile IP fields
-	registration_reply_header *reph = (registration_reply_header*)(uph + 1);
+	registration_reply_header *reph = (registration_reply_header*)(udp_head + 1);
 
 	reph->type = 3; // Registration Reply
 	reph->code = 0; //TODO send code according to acceptance/denial of request
