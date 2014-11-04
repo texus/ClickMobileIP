@@ -40,7 +40,6 @@ class RegistrationRequester : public Element {
 	private:
 		MobileNodeInfobase *_infobase;
 		Vector<pending_request> _pending;
-		//Timer _time_since_last_adv; //!< Time since mobile node received last advertisement from current COA. Initialized to inf
 
 		Packet* createRequest(in_addr ip_dst, uint16_t lifetime, uint32_t co_addr);
 };

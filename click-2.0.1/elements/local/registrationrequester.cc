@@ -27,15 +27,14 @@ void RegistrationRequester::push(int, Packet *p) {
 
 	// Get relevant advertisement headers
 	click_ip *adv_iph = (click_ip*)p->data();
-	click_udp *adv_udp = (click_udp*)p->data(); //TODO is this used here?
-	mobile_advertisement_header *adv_mobileh = (mobile_advertisement_header*)p->data();
+	mobile_advertisement_header *adv_mobileh = (mobile_advertisement_header*)(adv_iph + 1);
 	advertisement_header *adv_advh = (advertisement_header*)p->data();
 	//TODO discard to an output[1]?
 	//p->kill();
 
 	// Check source address of advertisement
 	in_addr adv_src_addr = adv_iph->ip_src;
-	// Check if in home network
+	// Check if in home network //TODO check advertisement flags (home agent bit set, etc...)?
 	if(adv_src_addr == _infobase->homeAgent) {
 		if(_infobase->foreignAgent != _infobase->homeAgent) {
 			// send deregistration request
@@ -47,28 +46,20 @@ void RegistrationRequester::push(int, Packet *p) {
 		}
 	}
 	else {
-		click_chatter("Mobile node not home");
-		// Check if advertised COA = current COA
+		// ProcessAdvertisements element checks if advertisement needs to be sent to requester
+		// Only sends advertisement if either registration lifetime is ending OR no more advertisements are being
+		// received for current COA
 		uint32_t adv_co_addr = adv_mobileh->address;
-		if(adv_co_addr = _infobase->foreignAgent) {
-			//TODO check time until registration expired
-			//TODO set time since last advertisement from current COA = 0
-		}
-		else {
-			//TODO check time since last advertisement from current COA
-			// if too long ago, send request to new COA
-			click_chatter("Registering mobile node with new COA");
-			Packet *packet = createRequest(adv_src_addr, adv_mobileh->lifetime, adv_co_addr);
-			if(packet != 0) {
-				output(0).push(packet);
-			}
+		click_chatter("Registering mobile node with COA");
+		Packet *packet = createRequest(adv_src_addr, adv_mobileh->lifetime, adv_co_addr);
+		if(packet != 0) {
+			output(0).push(packet);
 		}
 	}
 }
 
 Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, uint32_t co_addr) {
 
-	//TODO add info to pending_requests
 	pending_request new_req;
 	//TODO save link layer address for foreign agent?
 	new_req.ip_dst = ip_dst;
@@ -111,10 +102,10 @@ Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, 
 	// add the UDP header
 	click_udp *udp_head = (click_udp*)packet->data();
 	//udp_head->uh_sport = ?? //TODO From which port are requests sent?
-	//udp_head->uh_dport = htons(434); // Destination port for registration requests is 434
-	//uint16_t len = packet->length() - sizeof(click_ip) - sizeof(registration_request_header);
-	//udp_head->uh_ulen = htons(len);
-	//udp_head->uh_usum = 0;
+	udp_head->uh_dport = htons(434); // Destination port for registration requests is 434
+	uint16_t len = packet->length() - sizeof(click_ip);
+	udp_head->uh_ulen = htons(len);
+	udp_head->uh_sum = 0;
 
 	// add Mobile IP fields
 	registration_request_header *req_head = (registration_request_header*)(udp_head+1);
@@ -139,7 +130,7 @@ Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, 
 	req_head->home_agent = _infobase->homeAgent.addr(); //TODO discover home agent when not known
 	req_head->co_addr = co_addr;
 
-	//TODO identification field?
+	//TODO identification field? Timestamp?
 
 	return packet;
 }
