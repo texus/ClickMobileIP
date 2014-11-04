@@ -18,11 +18,12 @@ MobilityAgentAdvertiser::~MobilityAgentAdvertiser()
 
 int MobilityAgentAdvertiser::configure(Vector<String> &conf, ErrorHandler *errh) {
 
+    bool intervalGiven;
     if (cp_va_kparse(conf, this, errh,
                      "SRC_IP", cpkM, cpIPAddress, &_srcIp,
-                     "INTERVAL", cpkM, cpUnsigned, &_interval,
                      "HOME_AGENT", cpkM, cpBool, &_homeAgent,
                      "FOREIGN_AGENT", cpkM, cpBool, &_foreignAgent,
+                     "INTERVAL", cpkC, &intervalGiven, cpUnsigned, &_interval,
                      cpEnd) < 0)
         return -1;
 
@@ -32,14 +33,33 @@ int MobilityAgentAdvertiser::configure(Vector<String> &conf, ErrorHandler *errh)
         return -1;
     }
 
-    _timer.initialize(this);
-    _timer.schedule_after_msec(_interval);
+    if (intervalGiven)
+    {
+        _timer.initialize(this);
+        _timer.schedule_after_msec(_interval);
+    }
 
     return 0;
 }
 
-void MobilityAgentAdvertiser::run_timer(Timer *) {
+void MobilityAgentAdvertiser::push(int, Packet* packet)
+{
+    click_ether* ethh = (click_ether*)packet->data();
+    click_ip* iph = (click_ip*)(ethh + 1);
 
+    sendPacket(iph->ip_src);
+}
+
+void MobilityAgentAdvertiser::run_timer(Timer *)
+{
+    sendPacket(IPAddress::make_broadcast());
+
+    int rnd = (rand() % 200) - 100;
+    _timer.schedule_after_msec(_interval + rnd);
+}
+
+void MobilityAgentAdvertiser::sendPacket(IPAddress destinationIP)
+{
     int packetsize = sizeof(click_ip) + sizeof(advertisement_header) + sizeof(mobile_advertisement_header);
     int headroom = sizeof(click_ether);
     WritablePacket* packet = Packet::make(headroom, 0, packetsize, 0);
@@ -59,8 +79,8 @@ void MobilityAgentAdvertiser::run_timer(Timer *) {
     iph->ip_id = htons(_sequenceNr);
     iph->ip_ttl = 1; // TTL must be 1 in advertisement
     iph->ip_p = 1; // protocol = ICMP
-    iph->ip_src.s_addr = _srcIp;
-    iph->ip_dst.s_addr = 0xffffffff;
+    iph->ip_src = _srcIp;
+    iph->ip_dst = destinationIP;
     iph->ip_sum = click_in_cksum((unsigned char*)packet->data(), packet->length());
 
     packet->set_dst_ip_anno(iph->ip_dst);
@@ -99,9 +119,6 @@ void MobilityAgentAdvertiser::run_timer(Timer *) {
         _sequenceNr = 256;
 
     output(0).push(packet);
-
-    int rnd = (rand() % 200) - 100;
-    _timer.schedule_after_msec(_interval + rnd);
 }
 
 CLICK_ENDDECLS

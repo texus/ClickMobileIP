@@ -11,12 +11,16 @@ class MobilityAgentAdvertiser : public Element {
 		~MobilityAgentAdvertiser();
 
 		const char *class_name() const	{ return "MobilityAgentAdvertiser"; }
-		const char *port_count() const 	{ return "0/1"; }
+		const char *port_count() const 	{ return "0-1/1"; }
 		const char *processing() const	{ return PUSH; }
 
 		int configure(Vector<String>&, ErrorHandler*);
 
+		void push(int, Packet*);
 		void run_timer(Timer *);
+
+	private:
+	    void sendPacket(IPAddress destinationIP);
 
 	private:
 	    IPAddress _srcIp;

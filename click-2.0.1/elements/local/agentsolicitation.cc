@@ -7,7 +7,7 @@
 #include "agentsolicitation.hh"
 
 CLICK_DECLS
-AgentSolicitation::AgentSolicitation() : _timer(this)
+AgentSolicitation::AgentSolicitation() : _timer(this), _messagesSendInRow(0)
 {
 }
 
@@ -23,7 +23,7 @@ int AgentSolicitation::configure(Vector<String> &conf, ErrorHandler *errh) {
         return -1;
 
     _timer.initialize(this);
-    _timer.schedule_after_msec(1000);
+    _timer.schedule_after_msec(10); // Let the mobile node send a solicitation message when it starts
     return 0;
 }
 
@@ -32,9 +32,20 @@ void AgentSolicitation::run_timer(Timer* timer)
     // Don't do anything when it isn't needed yet
     if (_infobase->connected || !_infobase->advertisements.empty())
     {
+        _messagesSendInRow = 0;
         timer->schedule_after_msec(1000);
         return;
     }
+
+    // If no router responds after a number of messages than stop sending messages
+    // TODO: Make the amount configurable
+    if (_messagesSendInRow >= 5)
+    {
+        timer->schedule_after_msec(1000);
+        return;
+    }
+
+    _messagesSendInRow++;
 
     int packetsize = sizeof(click_ip) + sizeof(agent_solicitation_header);
     int headroom = sizeof(click_ether);

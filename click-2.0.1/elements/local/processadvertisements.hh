@@ -26,6 +26,8 @@ class ProcessAdvertisements : public Element {
 	    MobileNodeInfobase* _infobase;
 
 	    Timer _timer;
+
+	    Timestamp _lastRegistrationAttempt;
 };
 
 CLICK_ENDDECLS
