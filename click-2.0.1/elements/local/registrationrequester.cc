@@ -11,7 +11,7 @@
 
 CLICK_DECLS
 
-RegistrationRequester::RegistrationRequester() {}
+RegistrationRequester::RegistrationRequester(): _timer(this) {}
 
 RegistrationRequester::~RegistrationRequester() {}
 
@@ -32,8 +32,8 @@ void RegistrationRequester::push(int, Packet *p) {
 
 	// Get relevant advertisement headers
 	click_ip *adv_iph = (click_ip*)p->data();
-	mobile_advertisement_header *adv_mobileh = (mobile_advertisement_header*)(adv_iph + 1);
-	advertisement_header *adv_advh = (advertisement_header*)p->data();
+	advertisement_header *adv_advh = (advertisement_header*)(adv_iph + 1);
+	mobile_advertisement_header *adv_mobileh = (mobile_advertisement_header*)(adv_advh + 1);
 	//TODO discard to an output[1]?
 	//p->kill();
 
@@ -88,7 +88,7 @@ Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, 
 	_infobase->pending.push_back(new_req);
 
 	// Make the registration request packet
-	int packet_size = sizeof(click_ip) /*+ sizeof(click_udp) */+ sizeof(registration_request_header);
+	int packet_size = sizeof(click_ip) + sizeof(click_udp) + sizeof(registration_request_header);
 	int headroom = sizeof(click_ether);
 
 	WritablePacket *packet = Packet::make(headroom, 0, packet_size, 0);
@@ -118,7 +118,7 @@ Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, 
 	packet->set_dst_ip_anno(ip_head->ip_dst);
 
 	// add the UDP header
-	click_udp *udp_head = (click_udp*)packet->data();
+	click_udp *udp_head = (click_udp*)(ip_head + 1);
 	//udp_head->uh_sport = ?? //TODO From which port are requests sent?
 	udp_head->uh_dport = htons(434); // Destination port for registration requests is 434
 	uint16_t len = packet->length() - sizeof(click_ip);

@@ -3,11 +3,6 @@
 #include <click/error.hh>
 #include "homeagentinfobase.hh"
 
-// TODO: REMOVE THESE INCLUDES TOGETHER WITH CODE IN CONSTRUCTOR
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 CLICK_DECLS
 HomeAgentInfobase::HomeAgentInfobase()
 {}

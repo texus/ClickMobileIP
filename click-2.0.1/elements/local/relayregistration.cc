@@ -7,7 +7,7 @@
 
 CLICK_DECLS
 
-RelayRegistration::RelayRegistration() {}
+RelayRegistration::RelayRegistration(): _timer(this) {}
 
 RelayRegistration::~RelayRegistration() {}
 
@@ -20,22 +20,39 @@ int RelayRegistration::configure(Vector<String> &conf, ErrorHandler *errh) {
 }
 
 void RelayRegistration::push(int, Packet *p) {
-    uint32_t packet_size = p->length();
-    if(packet_size = sizeof(click_ip) + sizeof(registration_request_header)) {
-    }
-    else if(packet_size = sizeof(click_ip) + sizeof(registration_reply_header)) {
-    }
-    // find out if request or reply
     click_ip *ip_h = (click_ip *)p->data();
-   // registration_request_header *req_h = (registration_request_header*)(ip_h + 1); //TODO check if this returns correct header
-  //  registration_reply_header *rep_h = (registration_reply_header*)(ip_h + 1); //TODO see above
-   // if(req_h->type == 1) {
-        // packet is registration request
-   // }
-   // else if(rep_h->type == 3) {
-        // packet is registration reply   
-        // check visitor list for pending request with same home address set + id
-    //}
+    uint32_t packet_size = p->length();
+    if(packet_size = sizeof(click_ip) + sizeof(click_udp) + sizeof(registration_request_header)) {
+        registration_request_header *req_h = (registration_request_header*)(ip_h + 1); //TODO check if this returns correct header
+        if(req_h->type == 1) {
+            // relaying registration request
+            // check if home address does not belong to network interface of foreign agent //TODO
+            // if acting as home agent, send packet to registration replier //TODO
+            // else, reject using code 136
+
+            // if home address not in network 
+            // if non-zero UDP, discard silently
+            // if non-zero flags in zero-bits of request, reject with code 70 (poorly formed request)
+            // add pending request to visitor list
+            // relay to home agent
+            WritablePacket *packet = p->uniqueify();
+            ip_h = (click_ip *)packet->data();
+            click_udp *udp_h = (click_udp *)packet->data();
+            // set IP fields
+            // ip_h->ip_src = _infobase->interface_addr;
+            ip_h->ip_dst = req_h->home_agent;
+            // set UDP fields
+            udp_h->uh_sport = 
+        }
+        
+    }
+    else if(packet_size = sizeof(click_ip) + sizeof(click_udp) + sizeof(registration_reply_header)) {
+        registration_reply_header *rep_h = (registration_reply_header*)(ip_h + 1); //TODO check if this return correct header
+        if(rep_h->type == 3) {
+            // relaying registration reply
+        }
+    }
+ 
     // if request, check if ill-formed
     // if  well-formed, send on to home agent
     // + add information to visitor table

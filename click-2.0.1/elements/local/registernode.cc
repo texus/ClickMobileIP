@@ -20,8 +20,8 @@ int RegisterNode::configure(Vector<String> &conf, ErrorHandler *errh) {
 void RegisterNode::push(int, Packet *p) {
     // receive reply
     click_ip *ip_h = (click_ip *)p->data();
-    click_udp *udp_h = (click_udp *)p->data();
-    registration_reply_header *rep_h = (registration_reply_header *)(ip_h + 1); //TODO right header?
+    click_udp *udp_h = (click_udp *)(ip_h + 1);
+    registration_reply_header *rep_h = (registration_reply_header *)(udp_h + 1);
 
     // get corresponding pending request
     Vector<pending_request>::iterator most_recent;

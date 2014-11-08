@@ -21,7 +21,7 @@ void RegistrationReplier::push(int, Packet *p) {
 	// it is assumed that all incoming packets are registration requests
 	// get relevant headers
 	click_ip *req_ip = (click_ip*)p->data();
-	click_udp *req_udp = (click_udp*)p->data();
+	click_udp *req_udp = (click_udp*)(req_ip + 1);
 	registration_request_header *req_rh = (registration_request_header*)(req_udp + 1);
 
 	// decide to accept or deny
@@ -37,7 +37,7 @@ void RegistrationReplier::push(int, Packet *p) {
     }
 
 	// send reply
-	int packet_size = sizeof(click_ip) + sizeof(registration_reply_header);
+	int packet_size = sizeof(click_ip) + sizeof(click_udp) + sizeof(registration_reply_header);
 	int headroom = sizeof(click_ether);
 	WritablePacket *packet = Packet::make(headroom, 0, packet_size, 0);
 
@@ -58,7 +58,7 @@ void RegistrationReplier::push(int, Packet *p) {
 	packet->set_dst_ip_anno(ip_head->ip_dst);
 
 	// add UDP header
-	click_udp *udp_head = (click_udp*)packet->data();
+	click_udp *udp_head = (click_udp*)(ip_head + 1);
 	udp_head->uh_sport = req_udp->uh_dport; // copied form dst port of corresponding Registration Request
 	udp_head->uh_dport = req_udp->uh_sport; // copied from source port of corresponding Registration Request
 	uint16_t len = packet->length() - sizeof(click_ip);
@@ -99,7 +99,7 @@ uint8_t RegistrationReplier::check_acceptability(Packet *packet) {
 		136	unknown home agent address
 	*/
 	click_ip *req_ip = (click_ip*)packet->data();
-	click_udp *req_udp = (click_udp*)packet->data();
+	click_udp *req_udp = (click_udp*)(req_ip + 1);
 	registration_request_header *req_rh = (registration_request_header*)(req_udp + 1);
 
 	// if r or x flags in request not 0, return 'Poorly formed request' code (134)
