@@ -10,14 +10,7 @@
 
 CLICK_DECLS
 HomeAgentInfobase::HomeAgentInfobase()
-{
-    // TODO: REMOVE THIS WHEN REGISTRATION IS IMPLEMENTED
-    //       This code hardcodes the mobile nodes location as the foreign agent
-    MobileNodeInfo info;
-    info.address = inet_addr("192.168.2.1");
-    info.careOfAddress = inet_addr("192.168.1.3");
-    mobileNodesInfo.push_back(info);
-}
+{}
 
 HomeAgentInfobase::~HomeAgentInfobase()
 {}

@@ -63,12 +63,21 @@ void ProcessAdvertisements::run_timer(Timer* timer){
     {
         _infobase->lifetime--;
 
-        if (_infobase->lifetime == 0)
+        if (_infobase->lifetime <= 5) //TODO get good value for this
+        {
+            // when registration almost expired, look for advertisement of current foreign agent
+            // & relay to element that sends requests
+            Packet *p = _infobase->advertisements[_infobase->foreignAgent];
+            if(p != 0) //TODO safe?
+            {
+                output(1).push(p);
+            }
+            
+        }
+        if (_infobase->lifetime == 0) 
         {
             _infobase->connected = false;
-
-            /// TODO: Should we do something here?
-            ///       Our registration is no longer valid.
+            //TODO should something else happen here?
         }
     }
 

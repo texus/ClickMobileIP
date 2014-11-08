@@ -3,6 +3,8 @@
 #include <click/element.hh>
 #include <click/timer.hh>
 
+CLICK_DECLS
+
 struct MobileNodeInfo
 {
     IPAddress address;
@@ -10,8 +12,6 @@ struct MobileNodeInfo
     uint64_t  identification;
     uint8_t   remainingLifetime;
 };
-
-CLICK_DECLS
 
 class HomeAgentInfobase : public Element {
 	public:

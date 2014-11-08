@@ -4,6 +4,8 @@
 #include <clicknet/ether.h>
 #include <clicknet/ip.h>
 #include <clicknet/udp.h>
+#include <click/timestamp.hh>
+
 #include "registrationrequester.hh"
 #include "mobilityagentadvertiser.hh"
 
@@ -18,6 +20,9 @@ int RegistrationRequester::configure(Vector<String>& conf, ErrorHandler *errh) {
 			"INFOBASE", cpkP + cpkM, cpElement, &_infobase, 
 			cpEnd) < 0) 
 		return -1; //TODO add constructor arguments
+
+    _timer.initialize(this);
+    _timer.schedule_after_msec(1000);
 	return 0;
 }
 
@@ -58,6 +63,19 @@ void RegistrationRequester::push(int, Packet *p) {
 	}
 }
 
+void RegistrationRequester::run_timer(Timer *timer) {
+
+    // decrease remaining lifetime of pending requests
+    for(Vector<pending_request>::iterator it = _infobase->pending.begin(); it != _infobase->pending.end(); ++it) {
+        uint16_t lifetime = ntohs(it->remaining_lifetime);
+        --lifetime;
+        it->remaining_lifetime = htons(lifetime);
+        // TODO: what to do when lifetime reaches 0?
+    }
+
+    timer->schedule_after_msec(1000);
+}
+
 Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, uint32_t co_addr) {
 
 	pending_request new_req;
@@ -67,7 +85,7 @@ Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, 
 	//TODO id?
 	new_req.requested_lifetime = lifetime;
 	new_req.remaining_lifetime = lifetime;
-	_pending.push_back(new_req);
+	_infobase->pending.push_back(new_req);
 
 	// Make the registration request packet
 	int packet_size = sizeof(click_ip) /*+ sizeof(click_udp) */+ sizeof(registration_request_header);
@@ -113,24 +131,27 @@ Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, 
 	// Set type
 	req_head->type = 1; //Type = 1 (Registration Request)
 	// Set flags
-	req_head->flags =	0 << 7		// Simultaneous bindings: not supported in this project
-						+ 0 << 6	// Broadcast datagrams //TODO check when to turn on
-						+ 0 << 5	// Decapsulation by mobile node: only when registering co-located COA (not supported)
-						+ 0 << 4	// Minimal encapsulation //TODO check when to turn on.
-						+ 0 << 3	// GRE encapsulation //TODO check when to turn on
-						+ 0 << 2	// r, always sent as 0
-						+ 0 << 1	// Reverse tunnelling //TODO check if supported?
-						+ 0;		// x, always sent as 0
+	req_head->flags =	(1 << 7)		// Simultaneous bindings: not supported in this project
+						+ (0 << 6)	// Broadcast datagrams //TODO check when to turn on
+						+ (0 << 5)	// Decapsulation by mobile node: only when registering co-located COA (not supported)
+						+ (0 << 4)	// Minimal encapsulation //TODO check when to turn on.
+						+ (0 << 3)	// GRE encapsulation //TODO check when to turn on
+						+ (0 << 2)	// r, always sent as 0
+						+ (0 << 1)	// Reverse tunnelling //TODO check if supported?
+						+ (0);		// x, always sent as 0
 
 	// Set lifetime
 	req_head->lifetime = lifetime; //TODO If not specified in advertisement, use (ADJUSTABLE) default ICMP Router Advertisement lifetime 
 
 	//Set home address 
 	req_head->home_addr = _infobase->homeAddress.addr();
-	req_head->home_agent = _infobase->homeAgent.addr(); //TODO discover home agent when not known
+	req_head->home_agent = _infobase->homeAgent.addr();
 	req_head->co_addr = co_addr;
-
-	//TODO identification field? Timestamp?
+    
+    Timestamp stamp;
+    stamp.assign_now();
+    uint32_t id = stamp.subsec(); //TODO what is the right value to use?
+    req_head->id = id;
 
 	return packet;
 }

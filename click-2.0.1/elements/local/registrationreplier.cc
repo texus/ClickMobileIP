@@ -13,9 +13,11 @@ RegistrationReplier::RegistrationReplier() {}
 RegistrationReplier::~RegistrationReplier() {}
 
 int RegistrationReplier::configure(Vector<String>& conf, ErrorHandler *errh) {
+	if(cp_va_kparse(conf, this, errh, "INFOBASE", cpkP + cpkM, cpElement, &_infobase, cpEnd) < 0)
+		return -1;
 }
 
-void push(int, Packet *p) {
+void RegistrationReplier::push(int, Packet *p) {
 	// it is assumed that all incoming packets are registration requests
 	// get relevant headers
 	click_ip *req_ip = (click_ip*)p->data();
@@ -23,9 +25,18 @@ void push(int, Packet *p) {
 	registration_request_header *req_rh = (registration_request_header*)(req_udp + 1);
 
 	// decide to accept or deny
-	// if accepted, save info into homeagentinfobase
-	// send reply
+	uint8_t code = check_acceptability(p);
 
+	// if accepted, save info into homeagentinfobase
+    if(code == 0 || code == 1) {MobileNodeInfo info; //TODO check if all info correct
+        info.address = req_ip->ip_src;
+        info.careOfAddress = IPAddress(req_rh->co_addr);
+        info.identification = req_rh->id;
+        info.remainingLifetime = req_rh->lifetime;
+        _infobase->mobileNodesInfo.push_back(info);
+    }
+
+	// send reply
 	int packet_size = sizeof(click_ip) + sizeof(registration_reply_header);
 	int headroom = sizeof(click_ether);
 	WritablePacket *packet = Packet::make(headroom, 0, packet_size, 0);
@@ -48,7 +59,7 @@ void push(int, Packet *p) {
 
 	// add UDP header
 	click_udp *udp_head = (click_udp*)packet->data();
-	//udp_head->uh_sport = ? //TODO from which port?
+	udp_head->uh_sport = req_udp->uh_dport; // copied form dst port of corresponding Registration Request
 	udp_head->uh_dport = req_udp->uh_sport; // copied from source port of corresponding Registration Request
 	uint16_t len = packet->length() - sizeof(click_ip);
 	udp_head->uh_ulen = htons(len);
@@ -58,20 +69,28 @@ void push(int, Packet *p) {
 	registration_reply_header *reph = (registration_reply_header*)(udp_head + 1);
 
 	reph->type = 3; // Registration Reply
-	reph->code = 0; //TODO send code according to acceptance/denial of request
+	reph->code = code;
+	reph->lifetime = req_rh->lifetime;
+	reph->home_addr = req_rh->home_addr;
+
+    if(code == 136) {
+        //TODO send home agent address when mobile node is discovering home agent address
+    }
+    else {
+	    reph->home_agent = req_rh->home_agent; 
+    }
+
+	reph->id = req_rh->id;
+
+	// send reply to output 0
+	output(0).push(packet);
+}
+
+uint8_t RegistrationReplier::check_acceptability(Packet *packet) {
 	/*
 	Accepted
 		0	registration accepted
 		1 	registratin accepted but simultaneous mobility bindings denied
-	Denied by foreign agent
-		64	reason unspecified
-		...
-		70	poorly formed Request
-		71	poorly formed Reply
-		72	requested encapsulation unavailable
-		...
-		80	home network unreachable (ICMP error received)
-		...
 	Denied by home agent
 		128	reason unspecified
 		...
@@ -79,11 +98,25 @@ void push(int, Packet *p) {
 		135 too many simultaneous mobility bindings
 		136	unknown home agent address
 	*/
-	reph->lifetime = 0xffff; //TODO make this not infinite
-	reph->home_addr = req_rh->home_addr;
-	reph->home_agent = req_rh->home_agent; //TODO send home agent address when mobile node is discovering home agent address
-	//reph->id = 0; //TODO calculate this from id sent in request
-	
+	click_ip *req_ip = (click_ip*)packet->data();
+	click_udp *req_udp = (click_udp*)packet->data();
+	registration_request_header *req_rh = (registration_request_header*)(req_udp + 1);
+
+	// if r or x flags in request not 0, return 'Poorly formed request' code (134)
+	uint8_t flags = req_rh->flags;
+	if((flags & 1) || ((flags >> 2) & 1)) {
+		return 134;
+	}
+
+	// if S bit set and already bound, return 'Too many simultaneous mobility bindings' code //TODO or also when just S bit set?
+	//if(((flags >> 7) & 1) && ) {
+	//}
+
+	// if HomeAgent field in request is not unicast, return 'Unknown home agent address' code //TODO
+
+	// if something else is wrong, return 'Reason unspecified' code //TODO when?
+
+	return 1; //TODO always return 1 when S not supported? Or only when S bit set?
 }
 
 CLICK_ENDDECLS

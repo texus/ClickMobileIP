@@ -5,6 +5,20 @@
 
 CLICK_DECLS
 
+struct pending_request {
+	// link-layer address if applicable //TODO when applicable?
+	// IP destination address of request
+	in_addr ip_dst;
+	// COA used in registration
+	uint32_t co_addr;
+	// identification value sent in registration
+    uint64_t id;
+	// originally requested lifetime
+	uint16_t requested_lifetime;
+	// remaining lifetime
+	uint16_t remaining_lifetime;
+};
+
 class MobileNodeInfobase : public Element {
 	public:
 		MobileNodeInfobase();
@@ -24,6 +38,7 @@ class MobileNodeInfobase : public Element {
 	    uint16_t  lifetime;
 
 	    HashMap<IPAddress, Packet*> advertisements;
+		Vector<pending_request> pending;
 };
 
 CLICK_ENDDECLS

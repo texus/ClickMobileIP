@@ -2,22 +2,11 @@
 #define CLICK_REGISTRATION_REQUESTER_HH
 
 #include <click/element.hh>
+#include <click/timer.hh>
 #include "mobilenodeinfobase.hh"
 
 CLICK_DECLS
 
-struct pending_request {
-	// link-layer address if applicable //TODO when applicable?
-	// IP destination address of request
-	in_addr ip_dst;
-	// COA used in registration
-	uint32_t co_addr;
-	// identification value sent in registration //TODO implement without security?
-	// originally requested lifetime
-	uint16_t requested_lifetime;
-	// remaining lifetime
-	uint16_t remaining_lifetime;
-};
 
 /**
 *
@@ -37,9 +26,11 @@ class RegistrationRequester : public Element {
 
 		void push(int, Packet*);
 
+        void run_timer(Timer*);
+
 	private:
 		MobileNodeInfobase *_infobase;
-		Vector<pending_request> _pending;
+	    Timer _timer;
 
 		Packet* createRequest(in_addr ip_dst, uint16_t lifetime, uint32_t co_addr);
 };

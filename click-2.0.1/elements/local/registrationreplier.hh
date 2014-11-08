@@ -2,12 +2,12 @@
 #define CLICK_REGISTRATION_REPLIER_HH
 
 #include <click/element.hh>
+#include "homeagentinfobase.hh"
 
 CLICK_DECLS
 
 /**
-*
-* @brief RegistrationReplier receives registration request and answers with acceptation or refusal.
+* RegistrationReplier receives registration request and answers with acceptation or refusal.
 */
 class RegistrationReplier: public Element {
 public:
@@ -20,7 +20,11 @@ public:
 
 	int configure(Vector<String>&, ErrorHandler*);
 
-	void pull(int, Packet*);
+	void push(int, Packet*);
+	
+private:
+	HomeAgentInfobase *_infobase;
+	uint8_t check_acceptability(Packet *packet);
 };
 
 struct registration_reply_header {
