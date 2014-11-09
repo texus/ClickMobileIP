@@ -116,7 +116,7 @@ Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, 
 
 	// add the UDP header
 	click_udp *udp_head = (click_udp*)(ip_head + 1);
-	//udp_head->uh_sport = ?? //TODO From which port are requests sent?
+	udp_head->uh_sport = htons(2222); //TODO From which port are requests sent?
 	udp_head->uh_dport = htons(434); // Destination port for registration requests is 434
 	uint16_t len = packet->length() - sizeof(click_ip);
 	udp_head->uh_ulen = htons(len);

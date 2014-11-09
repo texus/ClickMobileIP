@@ -10,7 +10,7 @@ CLICK_DECLS
 
 /**
 *
-* @brief RegistrationRequester receives MobilityAdvertisements and (if necessary) sends
+* RegistrationRequester receives MobilityAdvertisements and (if necessary) sends
 * (de)registration requests to foreign or home agent.
 */
 class RegistrationRequester : public Element {

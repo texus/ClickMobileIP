@@ -23,7 +23,7 @@ int RelayRegistration::configure(Vector<String> &conf, ErrorHandler *errh) {
 void RelayRegistration::push(int, Packet *p) {
     click_ip *ip_h = (click_ip *)p->data();
     click_udp *udp_h = (click_udp *)(ip_h + 1);
-    uint32_t packet_size = ntohs(p->length());
+    uint32_t packet_size = ntohl(p->length());
     if(packet_size = sizeof(click_ip) + sizeof(click_udp) + sizeof(registration_request_header)) {
         registration_request_header *req_h = (registration_request_header*)(udp_h + 1);
         if(req_h->type == 1) {
@@ -75,8 +75,12 @@ void RelayRegistration::push(int, Packet *p) {
             //relay to home agent 
             output(0).push(packet);
         }
+        else { 
+            click_chatter("relaying registration reply (faulty)");     
+        }
         
     }
+
     else if(packet_size = sizeof(click_ip) + sizeof(click_udp) + sizeof(registration_reply_header)) {
         registration_reply_header *rep_h = (registration_reply_header*)(udp_h + 1);
         if(rep_h->type == 3) {

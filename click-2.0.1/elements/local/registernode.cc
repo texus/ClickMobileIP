@@ -42,7 +42,7 @@ void RegisterNode::push(int, Packet *p) {
    
     // compare ID of reply to ID of most recent request sent to replying agent
     // if not matching, discard silently
-    uint64_t rep_id = ntohs(rep_h->id);
+    uint64_t rep_id = ntohl(rep_h->id);
     if(rep_id != most_recent->id) {
         //TODO kill?
         // remove pending request

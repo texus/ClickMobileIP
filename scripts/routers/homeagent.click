@@ -72,8 +72,8 @@ $private_address, $public_address, $default_gateway
 
     // Registration replies
     regs[0]
-    -> RegistrationReplier(infobase)
-    -> [0]arpq1
+        -> RegistrationReplier(infobase)
+        -> [0]arpq1;
 
     dt0[1] -> ICMPError($private_address, timeexceeded) -> rt;
     fr0[1] -> ICMPError($private_address, unreachable, needfrag) -> rt;

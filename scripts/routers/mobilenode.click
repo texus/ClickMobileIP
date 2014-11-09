@@ -25,7 +25,7 @@ $addr_info, $gateway
 
     regs[0]
     ->RegisterNode(infobase)
-    ->Discard
+    ->Discard //TODO resend requests if applicable
 	
 	// Input and output paths for eth0
 	c0 :: Classifier(12/0806 20/0001, 12/0806 20/0002, -);
