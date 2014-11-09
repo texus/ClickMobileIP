@@ -24,6 +24,8 @@ void RegistrationReplier::push(int, Packet *p) {
 	click_udp *req_udp = (click_udp*)(req_ip + 1);
 	registration_request_header *req_rh = (registration_request_header*)(req_udp + 1);
 
+    if(req_rh->type == 1) {
+
 	// decide to accept or deny
 	uint8_t code = check_acceptability(p);
 
@@ -36,23 +38,33 @@ void RegistrationReplier::push(int, Packet *p) {
         _infobase->mobileNodesInfo.push_back(info);
     }
 
+    click_chatter("Sending registration reply");
+
 	// send reply
 	int packet_size = sizeof(click_ip) + sizeof(click_udp) + sizeof(registration_reply_header);
 	int headroom = sizeof(click_ether);
 	WritablePacket *packet = Packet::make(headroom, 0, packet_size, 0);
 
+	// Check if packet correctly created
+	if(packet == 0) {
+		click_chatter("Could not make packet");
+		return;
+	}
+
+    memset(packet->data(), 0, packet->length());
+
 	// add IP header
 	click_ip *ip_head = (click_ip*)packet->data();
-	ip_head->ip_v = 4;
-	ip_head->ip_hl = 5; //TODO check if this is correct
+	ip_head->ip_v = htons(4);
+	ip_head->ip_hl = htons(5); //TODO check if this is correct
 	ip_head->ip_tos = 0; // Best-Effort
 	ip_head->ip_len = htons(packet_size);
-	//ip_head->ip_id //TODO necessary?
+	//ip_head->ip_id = 0; //TODO value?
 	ip_head->ip_ttl = 64;
 	ip_head->ip_p = 17; // UDP protocol
 	ip_head->ip_src = req_ip->ip_dst; // copied from destination address of the Registration Request //TODO see section 3.7.2.3, 3.8.3.1
 	ip_head->ip_dst = req_ip->ip_src; // copied form source address of Registration Request to wich agent is replying	
-	ip_head->ip_sum = click_in_cksum((unsigned char*)ip_head, sizeof(click_ip));
+	ip_head->ip_sum = click_in_cksum((unsigned char*)ip_head, sizeof(click_ip)); //TODO calculate in element?
 
 	// set destination in annotation
 	packet->set_dst_ip_anno(ip_head->ip_dst);
@@ -66,24 +78,25 @@ void RegistrationReplier::push(int, Packet *p) {
 	udp_head->uh_sum = 0; //TODO non-zero UDP checksum?
 
 	// add mobile IP fields
-	registration_reply_header *reph = (registration_reply_header*)(udp_head + 1);
+	registration_reply_header *rep_head = (registration_reply_header*)(udp_head + 1);
 
-	reph->type = 3; // Registration Reply
-	reph->code = code;
-	reph->lifetime = req_rh->lifetime;
-	reph->home_addr = req_rh->home_addr;
+	rep_head->type = 3; // Registration Reply
+	rep_head->code = code;
+	rep_head->lifetime = req_rh->lifetime;
+	rep_head->home_addr = req_rh->home_addr;
 
-    if(code == 136) {
+    //if(code == 136) {
         //TODO send home agent address when mobile node is discovering home agent address
-    }
-    else {
-	    reph->home_agent = req_rh->home_agent; 
-    }
+    //}
+    //else {
+	    rep_head->home_agent = req_rh->home_agent; 
+    //}
 
-	reph->id = req_rh->id;
+	rep_head->id = req_rh->id;
 
 	// send reply to output 0
 	output(0).push(packet);
+}
 }
 
 uint8_t RegistrationReplier::check_acceptability(Packet *packet) {

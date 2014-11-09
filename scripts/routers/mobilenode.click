@@ -14,6 +14,7 @@ $addr_info, $gateway
     ip :: Strip(14)
     //-> IPPrint("test")
     -> CheckIPHeader
+    -> regs::IPClassifier(src udp port 434, -)[1]
     -> rt :: StaticIPLookup(
         $addr_info:ip/32 0,
         $addr_info:ipnet 1,
@@ -21,6 +22,10 @@ $addr_info, $gateway
 
 	// ARP responses are copied to each ARPQuerier and the host.
 	arpt :: Tee(1);
+
+    regs[0]
+    ->RegisterNode(infobase)
+    ->Discard
 	
 	// Input and output paths for eth0
 	c0 :: Classifier(12/0806 20/0001, 12/0806 20/0002, -);
@@ -48,6 +53,9 @@ $addr_info, $gateway
     processAdvertisements[1]
         -> RegistrationRequester(infobase)
         -> [0]arpq0;
+
+    // process replies TODO
+    // RegisterNode(infobase)
 
     // Send agent solicitations when not connected and there are no advertisements
     AgentSolicitation(infobase, SRC_IP $addr_info:ip)

@@ -24,6 +24,8 @@ class HomeAgentInfobase : public Element {
 		int configure(Vector<String>&, ErrorHandler*);
 
 	public:
+        IPAddress home_agent_address;
+
 	    Vector<MobileNodeInfo> mobileNodesInfo;
 };
 

@@ -7,16 +7,24 @@ elementclass ForeignAgent
 {
 $private_address, $public_address, $default_gateway
 |
+    infobase :: ForeignAgentInfobase
+
     mobilityAgentAdvertiser :: MobilityAgentAdvertiser(SRC_IP $private_address, INTERVAL 500, HOME_AGENT false, FOREIGN_AGENT true)
 
 	// Shared IP input path and routing table
 	ip :: Strip(14)
 	-> CheckIPHeader
+    -> regs::IPClassifier(src or dst udp port 434, -)[1]
 	-> rt :: StaticIPLookup(
 		$private_address:ip/32 0,
 		$public_address:ip/32 0,
 		$private_address:ipnet 1,
 		$public_address:ipnet $default_gateway 2);
+
+    regs[0]
+    -> RelayRegistration(infobase)
+    -> SetIPChecksum
+    -> rt
 
 	// ARP responses are copied to each ARPQuerier and the host.
 	arpt :: Tee(2);
@@ -57,9 +65,11 @@ $private_address, $public_address, $default_gateway
 	    -> StripIPHeader
 	    -> CheckIPHeader
 
-	    // TODO: Somehow check if mobile node is here and send to it in a not-hardcoded way
+	    // TODO: element to look mobile node up in visitor list & send packet
 	    -> EtherEncap(0x0800, $private_address:eth, mobile_node_address:eth)
 	    -> [0]output
+
+    //TODO relay requests + replies
 
 	// Forwarding path for eth0
 	rt[1] -> DropBroadcasts

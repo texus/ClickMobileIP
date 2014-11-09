@@ -7,11 +7,15 @@
 CLICK_DECLS
 
 struct visitor_entry {
-    // link-layer source address of the mobile node
+    // link-layer source address of the mobile node //TODO
     // IP-source address (mobile node's home address)
+    IPAddress ip_src;
     // IP Destination Address
+    IPAddress ip_dst;
     // UDP source port
+    
     // Home Agent address
+    IPAddress home_addr;
     // Identification field
     uint64_t id;
     // requested registration Lifetime
@@ -33,6 +37,10 @@ public:
 
     Vector<visitor_entry> pending_requests;
     HashMap<IPAddress, visitor_entry> current_registrations; 
+
+    // TODO care of address
+
+    // TODO interface address?
 
     // TODO maximum number of pending registrations? (optional)
 

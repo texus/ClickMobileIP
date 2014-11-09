@@ -12,7 +12,6 @@ ForeignAgentInfobase::~ForeignAgentInfobase()
 {}
 
 int ForeignAgentInfobase::configure(Vector<String>&, ErrorHandler*) {
-    //TODO configure with valid Care of addresses?
     return 0;
 }
 

@@ -28,7 +28,6 @@ int RegistrationRequester::configure(Vector<String>& conf, ErrorHandler *errh) {
 
 void RegistrationRequester::push(int, Packet *p) {
 	// It is assumed that all incoming packets are advertisments //TODO other methods of discovering FA's
-	click_chatter("Got an advertisment packet.");
 
 	// Get relevant advertisement headers
 	click_ip *adv_iph = (click_ip*)p->data();
@@ -43,7 +42,6 @@ void RegistrationRequester::push(int, Packet *p) {
 	if(adv_src_addr == _infobase->homeAgent) {
 		if(_infobase->foreignAgent != _infobase->homeAgent) {
 			// send deregistration request
-			click_chatter("Deregistering mobile node");
 			Packet *packet = createRequest(adv_src_addr, 0, _infobase->homeAddress);
 			if(packet != 0){
 				output(0).push(packet);
@@ -55,7 +53,6 @@ void RegistrationRequester::push(int, Packet *p) {
 		// Only sends advertisement if either registration lifetime is ending OR no more advertisements are being
 		// received for current COA
 		uint32_t adv_co_addr = adv_mobileh->address;
-		click_chatter("Registering mobile node with COA");
 		Packet *packet = createRequest(adv_src_addr, adv_mobileh->lifetime, adv_co_addr);
 		if(packet != 0) {
 			output(0).push(packet);
@@ -105,7 +102,7 @@ Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, 
 	click_ip *ip_head = (click_ip*)packet->data();
 	// set IP fields to correct values
 	ip_head->ip_v = 4;
-	ip_head->ip_hl = 5; //TODO check if this is correct
+	ip_head->ip_hl = 5;
 	ip_head->ip_tos = 0; // Best-Effort
 	ip_head->ip_len = htons(packet_size);
 	//TODO ip-id necessary?
@@ -131,7 +128,7 @@ Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, 
 	// Set type
 	req_head->type = 1; //Type = 1 (Registration Request)
 	// Set flags
-	req_head->flags =	(1 << 7)		// Simultaneous bindings: not supported in this project
+	req_head->flags =	(0 << 7)		// Simultaneous bindings: not supported in this project
 						+ (0 << 6)	// Broadcast datagrams //TODO check when to turn on
 						+ (0 << 5)	// Decapsulation by mobile node: only when registering co-located COA (not supported)
 						+ (0 << 4)	// Minimal encapsulation //TODO check when to turn on.

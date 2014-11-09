@@ -6,13 +6,16 @@ elementclass HomeAgent
 {
 $private_address, $public_address, $default_gateway
 |
-    infobase :: HomeAgentInfobase
+    infobase :: HomeAgentInfobase($private_address)
 
     mobilityAgentAdvertiser :: MobilityAgentAdvertiser(SRC_IP $private_address, INTERVAL 500, HOME_AGENT true, FOREIGN_AGENT false)
+
+    //TODO RegistrationReplier
 
 	// Shared IP input path and routing table
 	ip :: Strip(14)
 	-> CheckIPHeader
+    -> regs::IPClassifier(src udp port 434, -)[1]
 	-> rt :: StaticIPLookup(
 		$private_address:ip/32 0,
 		$public_address:ip/32 0,
@@ -34,6 +37,11 @@ $private_address, $public_address, $default_gateway
 	c0[1] -> arpt;
 	arpt[0] -> [1]arpq0;
 	c0[2] -> Paint(1) -> ip;
+
+    // Registration replies
+    regs[0]
+    -> RegistrationReplier(infobase)
+    -> [0]arpq0
 
 	// Respond to agent solicitations
     checkIfAgentSolicitation[0]
