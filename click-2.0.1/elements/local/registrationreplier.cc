@@ -41,7 +41,7 @@ void RegistrationReplier::push(int, Packet *p) {
     click_chatter("Sending registration reply");
 
 	// send reply
-	int packet_size = sizeof(click_ip) + sizeof(click_udp) + sizeof(registration_reply_header);
+	int packet_size = sizeof(click_ip) + sizeof(click_udp) + sizeof(registration_reply_header) + sizeof(uint64_t);
 	int headroom = sizeof(click_ether);
 	WritablePacket *packet = Packet::make(headroom, 0, packet_size, 0);
 
@@ -92,7 +92,8 @@ void RegistrationReplier::push(int, Packet *p) {
 	    rep_head->home_agent = req_rh->home_agent; 
     //}
 
-	rep_head->id = req_rh->id;
+    uint64_t* rep_id = (uint64_t*)(rep_head + 1);
+	*rep_id = req_rh->id;
 
 	// send reply to output 0
 	output(0).push(packet);

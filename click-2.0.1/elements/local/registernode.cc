@@ -22,6 +22,7 @@ void RegisterNode::push(int, Packet *p) {
     click_ip *ip_h = (click_ip *)p->data();
     click_udp *udp_h = (click_udp *)(ip_h + 1);
     registration_reply_header *rep_h = (registration_reply_header *)(udp_h + 1);
+    uint64_t rep_id = *((uint64_t*)(rep_h + 1)); // TODO: Byte order of 64-bit number?
 
     // get corresponding pending request
     Vector<pending_request>::iterator most_recent;
@@ -42,7 +43,6 @@ void RegisterNode::push(int, Packet *p) {
    
     // compare ID of reply to ID of most recent request sent to replying agent
     // if not matching, discard silently
-    uint64_t rep_id = ntohl(rep_h->id);
     if(rep_id != most_recent->id) {
         //TODO kill?
         // remove pending request
