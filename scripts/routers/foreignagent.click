@@ -67,7 +67,8 @@ $private_address, $public_address, $default_gateway
 	    -> StripIPHeader
 	    -> CheckIPHeader
 	    -> ForeignAgentRouting(infobase)
-	    -> [0]arpq0
+	    -> Discard // TODO: Continue when ForeignAgentRouting is implemented
+//	    -> [0]arpq0
 
     //TODO relay requests + replies
 
