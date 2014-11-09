@@ -11,7 +11,8 @@ ForeignAgentInfobase::ForeignAgentInfobase()
 ForeignAgentInfobase::~ForeignAgentInfobase() 
 {}
 
-int ForeignAgentInfobase::configure(Vector<String>&, ErrorHandler*) {
+int ForeignAgentInfobase::configure(Vector<String>& conf, ErrorHandler *errh) {
+    if(cp_va_kparse(conf, this, errh, "ADDRESS", cpkP + cpkM, cpIPAddress, &address, cpEnd) < 0) return -1;
     return 0;
 }
 

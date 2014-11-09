@@ -38,11 +38,6 @@ $private_address, $public_address, $default_gateway
 	arpt[0] -> [1]arpq0;
 	c0[2] -> Paint(1) -> ip;
 
-    // Registration replies
-    regs[0]
-    -> RegistrationReplier(infobase)
-    -> [0]arpq0
-
 	// Respond to agent solicitations
     checkIfAgentSolicitation[0]
 	    -> mobilityAgentAdvertiser
@@ -74,6 +69,11 @@ $private_address, $public_address, $default_gateway
 	mobile_routing[1]
         -> Encapsulator(infobase, SRC_IP $public_address)
         -> [0]arpq1;
+
+    // Registration replies
+    regs[0]
+    -> RegistrationReplier(infobase)
+    -> [0]arpq1
 
     dt0[1] -> ICMPError($private_address, timeexceeded) -> rt;
     fr0[1] -> ICMPError($private_address, unreachable, needfrag) -> rt;

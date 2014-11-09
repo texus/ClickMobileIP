@@ -59,8 +59,7 @@ void RelayRegistration::push(int, Packet *p) {
             // set IP fields
             ip_head->ip_len = htons(packet_size);
             ip_head->ip_ttl = 64;
-            // ip_h->ip_src = _infobase->interface_addr; //TODO
-            ip_head->ip_src = ip_h->ip_dst;
+            ip_head->ip_src = _infobase->address;
             IPAddress dst = IPAddress(req_h->home_agent);
             ip_head->ip_dst = dst.in_addr();
             //ip_head->ip_sum = click_in_cksum((unsigned char*)ip_head, htons(packet_size)); //TODO calculate in element?

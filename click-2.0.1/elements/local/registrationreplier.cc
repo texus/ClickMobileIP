@@ -55,8 +55,8 @@ void RegistrationReplier::push(int, Packet *p) {
 
 	// add IP header
 	click_ip *ip_head = (click_ip*)packet->data();
-	ip_head->ip_v = htons(4);
-	ip_head->ip_hl = htons(5); //TODO check if this is correct
+	ip_head->ip_v = 4;
+	ip_head->ip_hl = 5;
 	ip_head->ip_tos = 0; // Best-Effort
 	ip_head->ip_len = htons(packet_size);
 	//ip_head->ip_id = 0; //TODO value?

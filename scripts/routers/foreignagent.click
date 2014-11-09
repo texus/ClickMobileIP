@@ -7,7 +7,7 @@ elementclass ForeignAgent
 {
 $private_address, $public_address, $default_gateway
 |
-    infobase :: ForeignAgentInfobase
+    infobase :: ForeignAgentInfobase($public_address)
 
     mobilityAgentAdvertiser :: MobilityAgentAdvertiser(SRC_IP $private_address, INTERVAL 500, HOME_AGENT false, FOREIGN_AGENT true)
 

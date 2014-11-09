@@ -40,7 +40,7 @@ public:
 
     // TODO care of address
 
-    // TODO interface address?
+    IPAddress address;
 
     // TODO maximum number of pending registrations? (optional)
 
