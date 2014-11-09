@@ -21,6 +21,7 @@ int MobilityAgentAdvertiser::configure(Vector<String> &conf, ErrorHandler *errh)
     bool intervalGiven;
     if (cp_va_kparse(conf, this, errh,
                      "SRC_IP", cpkM, cpIPAddress, &_srcIp,
+                     "CARE_OF_ADDRESS", cpkM, cpIPAddress, &_careOfAddress,
                      "HOME_AGENT", cpkM, cpBool, &_homeAgent,
                      "FOREIGN_AGENT", cpkM, cpBool, &_foreignAgent,
                      "INTERVAL", cpkC, &intervalGiven, cpUnsigned, &_interval,
@@ -99,7 +100,7 @@ void MobilityAgentAdvertiser::sendPacket(IPAddress destinationIP)
     madvh->length = 6 + 4 * 1;
     madvh->seq_nr = htons(_sequenceNr);
     madvh->lifetime = htons(0xffff); // TODO: Set to non-infinite lifetime
-    madvh->address = _srcIp; /// TODO: Should this really be the address of the router?
+    madvh->address = _careOfAddress;
     madvh->flags =  (1 << 7) // Registration required
                   + (0 << 6) // Busy
                   + (_homeAgent << 5) // Home agent

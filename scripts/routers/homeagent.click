@@ -8,7 +8,11 @@ $private_address, $public_address, $default_gateway
 |
     infobase :: HomeAgentInfobase($private_address)
 
-    mobilityAgentAdvertiser :: MobilityAgentAdvertiser(SRC_IP $private_address, INTERVAL 500, HOME_AGENT true, FOREIGN_AGENT false)
+    mobilityAgentAdvertiser :: MobilityAgentAdvertiser(SRC_IP $private_address,
+                                                       CARE_OF_ADDRESS $public_address,
+                                                       INTERVAL 500,
+                                                       HOME_AGENT true,
+                                                       FOREIGN_AGENT false)
 
     //TODO RegistrationReplier
 
@@ -39,9 +43,7 @@ $private_address, $public_address, $default_gateway
 	c0[2] -> Paint(1) -> ip;
 
 	// Respond to agent solicitations
-    checkIfAgentSolicitation[0]
-	    -> mobilityAgentAdvertiser
-	    -> [0]arpq0
+    checkIfAgentSolicitation[0] -> mobilityAgentAdvertiser
 
 	// Input and output paths for eth1
 	c1 :: Classifier(12/0806 20/0001, 12/0806 20/0002, -);

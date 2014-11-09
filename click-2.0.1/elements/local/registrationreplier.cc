@@ -30,8 +30,10 @@ void RegistrationReplier::push(int, Packet *p) {
 	uint8_t code = check_acceptability(p);
 
 	// if accepted, save info into homeagentinfobase
-    if(code == 0 || code == 1) {MobileNodeInfo info; //TODO check if all info correct
-        info.address = req_ip->ip_src;
+    if(code == 0 || code == 1)
+    {
+        MobileNodeInfo info; //TODO check if all info correct
+        info.address = IPAddress(req_rh->home_addr);
         info.careOfAddress = IPAddress(req_rh->co_addr);
         info.identification = req_rh->id;
         info.remainingLifetime = req_rh->lifetime;

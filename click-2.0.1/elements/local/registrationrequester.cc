@@ -109,7 +109,7 @@ Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, 
 	ip_head->ip_ttl = 64; //TODO set to 1 if broadcasting request to all mobile agents
 	ip_head->ip_p = 17; //UDP protocol
 	ip_head->ip_src = _infobase->homeAddress; // Home address is assumed to be known in this project
-	ip_head->ip_dst = ip_dst; //TODO if foreign agent IP-address is not known, set to 255.255.255.255 ("all mobility agents")
+	ip_head->ip_dst = ip_dst; //TODO if foreign agent IP-address is not known, set to 255.255.255.255 ("all mobility agents"). Don't we always know it???
 	ip_head->ip_sum = click_in_cksum((unsigned char*)ip_head, sizeof(click_ip));
 	// set destination in annotation
 	packet->set_dst_ip_anno(ip_head->ip_dst);

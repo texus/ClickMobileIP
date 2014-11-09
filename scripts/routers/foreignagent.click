@@ -9,7 +9,11 @@ $private_address, $public_address, $default_gateway
 |
     infobase :: ForeignAgentInfobase($public_address)
 
-    mobilityAgentAdvertiser :: MobilityAgentAdvertiser(SRC_IP $private_address, INTERVAL 500, HOME_AGENT false, FOREIGN_AGENT true)
+    mobilityAgentAdvertiser :: MobilityAgentAdvertiser(SRC_IP $private_address,
+                                                       CARE_OF_ADDRESS $public_address,
+                                                       INTERVAL 500,
+                                                       HOME_AGENT false,
+                                                       FOREIGN_AGENT true)
 
 	// Shared IP input path and routing table
 	ip :: Strip(14)
@@ -43,9 +47,7 @@ $private_address, $public_address, $default_gateway
 	c0[2] -> Paint(1) -> ip;
 
     // Respond to agent solicitations
-    checkIfAgentSolicitation[0]
-	    -> mobilityAgentAdvertiser
-	    -> [0]arpq0
+    checkIfAgentSolicitation[0] -> mobilityAgentAdvertiser
 
 	// Input and output paths for eth1
 	c1 :: Classifier(12/0806 20/0001, 12/0806 20/0002, -);
@@ -64,10 +66,8 @@ $private_address, $public_address, $default_gateway
 	checkIfEncapsulated[0]
 	    -> StripIPHeader
 	    -> CheckIPHeader
-
-	    // TODO: element to look mobile node up in visitor list & send packet
-	    -> EtherEncap(0x0800, $private_address:eth, mobile_node_address:eth)
-	    -> [0]output
+	    -> ForeignAgentRouting(infobase)
+	    -> [0]arpq0
 
     //TODO relay requests + replies
 
