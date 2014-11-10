@@ -24,8 +24,6 @@ void RegisterNode::push(int, Packet *p) {
     registration_reply_header *rep_h = (registration_reply_header *)(udp_h + 1);
     uint64_t rep_id = *((uint64_t*)(rep_h + 1)); // TODO: Byte order of 64-bit number?
 
-    click_chatter("registering node");
-
     // get corresponding pending request
     Vector<pending_request>::iterator most_recent;
     for(Vector<pending_request>::iterator it = _infobase->pending.begin();it != _infobase->pending.end(); ++it) {
@@ -63,7 +61,7 @@ void RegisterNode::push(int, Packet *p) {
         else {
             // registering on foreign network
             _infobase->connected = true;
-            _infobase->foreignAgent = IPAddress(most_recent->co_addr);
+            _infobase->foreignAgent = IPAddress(most_recent->ip_dst);
             // set lifetime
             uint16_t granted_lifetime = ntohs(rep_h->lifetime);
             uint16_t requested_lifetime = most_recent->requested_lifetime;
