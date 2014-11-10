@@ -25,11 +25,6 @@ $private_address, $public_address, $default_gateway
 		$private_address:ipnet 1,
 		$public_address:ipnet $default_gateway 2);
 
-    regs[0]
-    -> RelayRegistration(infobase)
-    -> SetIPChecksum
-    -> rt
-
 	// ARP responses are copied to each ARPQuerier and the host.
 	arpt :: Tee(2);
 
@@ -67,10 +62,18 @@ $private_address, $public_address, $default_gateway
 	    -> StripIPHeader
 	    -> CheckIPHeader
 	    -> ForeignAgentRouting(infobase)
-	    -> Discard // TODO: Continue when ForeignAgentRouting is implemented
-//	    -> [0]arpq0
+	    -> [0]arpq0
 
-    //TODO relay requests + replies
+    // Relay registration requests and replies
+    regs[0]
+        -> relayRegistration :: RelayRegistration(infobase)[0]
+        -> SetIPChecksum
+        -> ForeignAgentRouting(infobase)
+        -> [0]arpq0
+
+    relayRegistration[1]
+        -> SetIPChecksum
+        -> rt
 
 	// Forwarding path for eth0
 	rt[1] -> DropBroadcasts

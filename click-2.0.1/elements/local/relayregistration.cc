@@ -71,7 +71,6 @@ void RelayRegistration::push(int, Packet *p) {
             ip_head->ip_src = _infobase->address;
             IPAddress dst = IPAddress(req_h->home_agent);
             ip_head->ip_dst = dst.in_addr();
-            //ip_head->ip_sum = click_in_cksum((unsigned char*)ip_head, htons(packet_size)); //TODO calculate in element?
 
             // set annotation
             packet->set_dst_ip_anno(ip_head->ip_dst);
@@ -83,7 +82,7 @@ void RelayRegistration::push(int, Packet *p) {
             udp_head->uh_sum = 0;
 
             //relay to home agent 
-            output(0).push(packet);
+            output(1).push(packet);
         }    
     }
 
@@ -153,6 +152,7 @@ void RelayRegistration::push(int, Packet *p) {
             // set udp dest
             udp_head->uh_dport = htons(udp_src_prt);
 
+            // relay to mobile node
             output(0).push(packet);
             
         }

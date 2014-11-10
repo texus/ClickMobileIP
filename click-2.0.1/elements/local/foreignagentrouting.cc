@@ -27,7 +27,7 @@ void ForeignAgentRouting::push(int, Packet* packet) {
     //if (_infobase->current_registrations.find_pair(iph->ip_dst) != 0)
     if (_infobase->current_registrations.size() > 0)
     {
-        click_chatter("REGISTRATION COMPLETE, FOREIGN AGENT ROUTING CAN NOW BE FINISHED");
+
     }
 
     output(0).push(packet);
