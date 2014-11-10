@@ -41,7 +41,7 @@ void RegistrationReplier::push(int, Packet *p) {
     }
 
 	// send reply
-	int packet_size = sizeof(click_ip) + sizeof(click_udp) + sizeof(registration_reply_header) + sizeof(uint64_t);
+	int packet_size = sizeof(click_ip) + sizeof(click_udp) + sizeof(registration_reply_header);
 	int headroom = sizeof(click_ether);
 	WritablePacket *packet = Packet::make(headroom, 0, packet_size, 0);
 

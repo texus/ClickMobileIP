@@ -81,7 +81,7 @@ void RelayRegistration::push(int, Packet *p) {
         }    
     }
     // relay registration reply
-    else if(packet_size = sizeof(click_ip) + sizeof(click_udp) + sizeof(registration_reply_header) + sizeof(uint64_t)) {
+    else if(packet_size = sizeof(click_ip) + sizeof(click_udp) + sizeof(registration_reply_header)) {
         registration_reply_header *rep_h = (registration_reply_header*)(udp_h + 1);
         if(rep_h->type == 3) {
 
