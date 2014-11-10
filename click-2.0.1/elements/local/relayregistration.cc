@@ -97,15 +97,38 @@ void RelayRegistration::push(int, Packet *p) {
                 //TODO kill packet?
                 return;
             }
-            // if no pending request with same home address as home address in reply, discard silently //TODO
+            // if no pending request with same home address as home address in reply, discard silently
+            visitor_entry entry;
+            bool corresponding_request = false;
+            Vector<visitor_entry>::iterator it;
+            for(it = _infobase->pending_requests.begin(); it != _infobase->pending_requests.end(); ++it) {
+                if(it->ip_src == IPAddress(rep_h->home_addr) && it->id == rep_h->id) { 
+                    corresponding_request = true;
+                    entry = *it;
+                    break;
+                }          
+            }
 
-            // if ids not equal, discard silently
+            if(!corresponding_request) {    
+                //TODO kill packet?    
+                return;
+            }
 
             // update visitor list
             // if accepted -> set current
-            // if accepted & lifetime = 0 -> remove from visitor list (node has deregistered)
+            uint8_t code = rep_h->code;
+            if(code == 0 || code == 1) {
+                // request was accepted
+                //TODO update lifetime
+                _infobase->current_registrations.insert(entry.ip_src, entry);
 
-            // if denied: remove pending request entry
+                // remove pending
+                _infobase->pending_requests.erase(it);
+
+            }
+            // if accepted & lifetime = 0 -> remove from visitor list (node has deregistered) //TODO
+
+            // if denied: remove pending request entry //TODO
 
             // relay to mobile node
             WritablePacket *packet = p->uniqueify();
