@@ -86,6 +86,7 @@ void RegistrationReplier::push(int, Packet *p) {
 	rep_head->code = code;
 	rep_head->lifetime = req_rh->lifetime;
 	rep_head->home_addr = req_rh->home_addr;
+    rep_head->id = req_rh->id;
 
     //if(code == 136) {
         //TODO send home agent address when mobile node is discovering home agent address
@@ -94,8 +95,8 @@ void RegistrationReplier::push(int, Packet *p) {
 	    rep_head->home_agent = req_rh->home_agent; 
     //}
 
-    uint64_t* rep_id = (uint64_t*)(rep_head + 1);
-	*rep_id = req_rh->id;
+    //uint64_t* rep_id = (uint64_t*)(rep_head + 1);
+	//*rep_id = req_rh->id;
 
 	// send reply to output 0
 	output(0).push(packet);

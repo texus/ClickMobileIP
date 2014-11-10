@@ -28,28 +28,38 @@ void RelayRegistration::push(int, Packet *p) {
         registration_request_header *req_h = (registration_request_header*)(udp_h + 1);
         if(req_h->type == 1) {
             // relaying registration request
-            click_chatter("Relaying registration request");
+
             // check if home address does not belong to network interface of foreign agent //TODO
             // if acting as home agent, send packet to registration replier //TODO
             // else, reject using code 136
 
             // if home address not in network 
-            // if non-zero UDP, discard silently
-            uint8_t flags = req_h->flags;
-            if(flags != 0 || (flags >> 2) != 0) {
-                // if non-zero flags in zero-bits of request, reject with code 70 (poorly formed request)
-                // TODO send reply message
+            
+            // if UDP checksum not 0, discard silently
+            if(udp_h->uh_sum != 0) {
+                //TODO kill packet?
+                return;
             }
 
-            // + add information to visitor table //TODO
-            // link-layer source address of mobile node
-            // IP Source Address (= mobile node Home Address)
-            // IP Destination Address
-            // UDP Source Port
-            // Home Agent Address
-            // Identification field
-            // requested registration Lifetime
-            // remaining Lifetime of pending or current registration
+            // if non-zero flags in zero-bits of request, reject with code 70 (poorly formed request)
+            uint8_t flags = req_h->flags;
+            if(flags != 0 || (flags >> 2) != 0) {
+                // TODO send reply message
+                // Packet *packet = createReply(70);
+                // output(0).push(packet);
+            }
+
+            // add pending request to visitor table
+            visitor_entry entry;
+            // link-layer source address of mobile node //TODO
+            entry.ip_src = ip_h->ip_src; // mobile node Home Address //TODO correct address?
+            entry.ip_dst = ip_h->ip_dst; //TODO correct address
+            entry.udp_src = udp_h->uh_sport; 
+            entry.home_agent = IPAddress(req_h->home_agent); // Home Agent Address
+            entry.id = req_h->id;
+            entry.requested_lifetime = req_h->lifetime;
+            entry.remaining_lifetime = req_h->lifetime;
+            _infobase->pending_requests.push_back(entry);
 
             // relay to home agent
             WritablePacket *packet = p->uniqueify();
@@ -74,22 +84,21 @@ void RelayRegistration::push(int, Packet *p) {
 
             //relay to home agent 
             output(0).push(packet);
-        }
-        else { 
-            click_chatter("relaying registration reply (faulty)");     
-        }
-        
+        }    
     }
 
     else if(packet_size = sizeof(click_ip) + sizeof(click_udp) + sizeof(registration_reply_header) + sizeof(uint64_t)) {
         registration_reply_header *rep_h = (registration_reply_header*)(udp_h + 1);
         if(rep_h->type == 3) {
             // relaying registration reply
-            click_chatter("Relaying registration reply");
+            click_chatter("relaying reply");
 
             // if UDP checksum not 0, discard silently
- 
-            // if no pending request with same home address as home address in reply, discard silently
+            if(udp_h->uh_sum != 0) {
+                //TODO kill packet?
+                return;
+            }
+            // if no pending request with same home address as home address in reply, discard silently //TODO
 
             // if ids not equal, discard silently
 
@@ -125,8 +134,10 @@ void RelayRegistration::push(int, Packet *p) {
 void RelayRegistration::run_timer(Timer *timer) {
     // lower remaining lifetime of pending requests
     for(Vector<visitor_entry>::iterator it = _infobase->pending_requests.begin(); it != _infobase->pending_requests.end(); ++it) {
+        uint16_t lifetime = ntohs(it->remaining_lifetime);
         if(it->remaining_lifetime > 1) {
-            --(it->remaining_lifetime);
+            --lifetime;
+            it->remaining_lifetime = htons(lifetime);
             if(it->requested_lifetime - it->remaining_lifetime > 7) {
                 // if request is pending for longer than 7 seconds, send timeout reply + delete from list //TODO                
             }
@@ -147,6 +158,12 @@ void RelayRegistration::run_timer(Timer *timer) {
             // remove from visitor list //TODO
         //}
     }
+}
+
+Packet* RelayRegistration::createReply(uint8_t code) {
+        //TODO
+        //WriteablePacket *packet = ; 
+        
 }
 
 CLICK_ENDDECLS

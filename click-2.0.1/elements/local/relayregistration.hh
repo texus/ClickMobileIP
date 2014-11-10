@@ -29,6 +29,8 @@ public:
 private:
     ForeignAgentInfobase *_infobase;
     Timer _timer;
+
+    Packet* createReply(uint8_t code);
 };
 
 CLICK_ENDDECLS

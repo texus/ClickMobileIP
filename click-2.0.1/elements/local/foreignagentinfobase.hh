@@ -8,20 +8,13 @@ CLICK_DECLS
 
 struct visitor_entry {
     // link-layer source address of the mobile node //TODO
-    // IP-source address (mobile node's home address)
-    IPAddress ip_src;
-    // IP Destination Address
-    IPAddress ip_dst;
-    // UDP source port
-    
-    // Home Agent address
-    IPAddress home_addr;
-    // Identification field
-    uint64_t id;
-    // requested registration Lifetime
-    uint16_t requested_lifetime;
-    // remaining Lifetime
-    uint16_t remaining_lifetime;
+    IPAddress ip_src; // mobile node IP home address
+    IPAddress ip_dst; // destination IP address
+    uint16_t udp_src; // UDP source port
+    IPAddress home_agent; // Home Agent address
+    uint64_t id; // identification field
+    uint16_t requested_lifetime; // requested registration lifetime
+    uint16_t remaining_lifetime; // remaining lifetime
 };
 
 //TODO : one infobase for 'mobile agent' instead of separate for home and foreign agent functions?

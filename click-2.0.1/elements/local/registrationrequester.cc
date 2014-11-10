@@ -65,8 +65,10 @@ void RegistrationRequester::run_timer(Timer *timer) {
     // decrease remaining lifetime of pending requests
     for(Vector<pending_request>::iterator it = _infobase->pending.begin(); it != _infobase->pending.end(); ++it) {
         uint16_t lifetime = ntohs(it->remaining_lifetime);
-        --lifetime;
-        it->remaining_lifetime = htons(lifetime);
+        if(lifetime > 1) {
+            --lifetime;
+            it->remaining_lifetime = htons(lifetime);
+        }
         // TODO: what to do when lifetime reaches 0?
     }
 
