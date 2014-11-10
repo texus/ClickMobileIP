@@ -28,12 +28,11 @@ void RelayRegistration::push(int, Packet *p) {
         registration_request_header *req_h = (registration_request_header*)(udp_h + 1);
         if(req_h->type == 1) {
             // relaying registration request
+ 
 
             // check if home address does not belong to network interface of foreign agent //TODO
             // if acting as home agent, send packet to registration replier //TODO
             // else, reject using code 136
-
-            // if home address not in network 
             
             // if UDP checksum not 0, discard silently
             if(udp_h->uh_sum != 0) {
@@ -78,8 +77,9 @@ void RelayRegistration::push(int, Packet *p) {
             packet->set_dst_ip_anno(ip_head->ip_dst);
 
             // set UDP fields
+            uint16_t udp_src_prt = ntohs(udp_h->uh_sport);
             udp_head->uh_sport = htons(434);
-            udp_head->uh_dport = udp_h->uh_sport; 
+            udp_head->uh_dport = htons(udp_src_prt); 
             udp_head->uh_sum = 0;
 
             //relay to home agent 
@@ -91,7 +91,6 @@ void RelayRegistration::push(int, Packet *p) {
         registration_reply_header *rep_h = (registration_reply_header*)(udp_h + 1);
         if(rep_h->type == 3) {
             // relaying registration reply
-            click_chatter("relaying reply");
 
             // if UDP checksum not 0, discard silently
             if(udp_h->uh_sum != 0) {
@@ -104,11 +103,34 @@ void RelayRegistration::push(int, Packet *p) {
 
             // update visitor list
             // if accepted -> set current
-            // if accepted & lifetime = 0 -> remove from visitor list
+            // if accepted & lifetime = 0 -> remove from visitor list (node has deregistered)
 
             // if denied: remove pending request entry
 
             // relay to mobile node
+            WritablePacket *packet = p->uniqueify();
+
+            click_ip *ip_head = (click_ip *)packet->data();
+            click_udp *udp_head = (click_udp *)(ip_head + 1);
+
+            // set ip src
+            ip_head->ip_src = _infobase->address;
+            
+            // set ip dest
+            IPAddress dst = IPAddress(rep_h->home_addr);
+            ip_head->ip_dst = dst.in_addr();
+
+            // set annotations
+            packet->set_dst_ip_anno(ip_head->ip_dst);
+
+            uint16_t udp_src_prt = ntohs(udp_h->uh_sport);
+
+            // set udp source
+            udp_head->uh_sport = htons(434);
+            // set udp dest
+            udp_head->uh_dport = htons(udp_src_prt);
+
+            output(0).push(packet);
             
         }
     }

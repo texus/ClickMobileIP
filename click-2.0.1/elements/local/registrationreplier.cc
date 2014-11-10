@@ -40,8 +40,6 @@ void RegistrationReplier::push(int, Packet *p) {
         _infobase->mobileNodesInfo.push_back(info);
     }
 
-    click_chatter("Sending registration reply");
-
 	// send reply
 	int packet_size = sizeof(click_ip) + sizeof(click_udp) + sizeof(registration_reply_header) + sizeof(uint64_t);
 	int headroom = sizeof(click_ether);

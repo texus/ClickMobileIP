@@ -14,8 +14,6 @@ $private_address, $public_address, $default_gateway
                                                        HOME_AGENT true,
                                                        FOREIGN_AGENT false)
 
-    //TODO RegistrationReplier
-
 	// Shared IP input path and routing table
 	ip :: Strip(14)
 	-> CheckIPHeader

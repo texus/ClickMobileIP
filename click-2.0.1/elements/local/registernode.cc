@@ -24,6 +24,8 @@ void RegisterNode::push(int, Packet *p) {
     registration_reply_header *rep_h = (registration_reply_header *)(udp_h + 1);
     uint64_t rep_id = *((uint64_t*)(rep_h + 1)); // TODO: Byte order of 64-bit number?
 
+    click_chatter("registering node");
+
     // get corresponding pending request
     Vector<pending_request>::iterator most_recent;
     for(Vector<pending_request>::iterator it = _infobase->pending.begin();it != _infobase->pending.end(); ++it) {

@@ -69,7 +69,10 @@ void RegistrationRequester::run_timer(Timer *timer) {
             --lifetime;
             it->remaining_lifetime = htons(lifetime);
         }
-        // TODO: what to do when lifetime reaches 0?
+        else {
+            // remove pending requests whose lifetime has expired
+        }
+        // when no reply has been received within reasonable time, another registration request may be transmitted! //TODO
     }
 
     timer->schedule_after_msec(1000);
@@ -118,7 +121,7 @@ Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, 
 
 	// add the UDP header
 	click_udp *udp_head = (click_udp*)(ip_head + 1);
-	udp_head->uh_sport = htons(2222); //TODO From which port are requests sent?
+	udp_head->uh_sport = htons(6789); //TODO From which port are requests sent?
 	udp_head->uh_dport = htons(434); // Destination port for registration requests is 434
 	uint16_t len = packet->length() - sizeof(click_ip);
 	udp_head->uh_ulen = htons(len);
