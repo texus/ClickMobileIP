@@ -26,12 +26,18 @@ void RegisterNode::push(int, Packet *p) {
 
     // get corresponding pending request
     Vector<pending_request>::iterator most_recent;
+    bool corresponding_found = false;
     for(Vector<pending_request>::iterator it = _infobase->pending.begin();it != _infobase->pending.end(); ++it) {
-        if(it->ip_dst == ip_h->ip_src) {
+        if(it->co_addr == ip_h->ip_src) {
+            corresponding_found = true;
             most_recent = it;
             break;
         }
     }
+    
+    if(!corresponding_found) {  
+        return;
+     }
 
     // if non-zero UDP checksum, discard silently
     if(udp_h->uh_sum != 0) {
@@ -43,6 +49,8 @@ void RegisterNode::push(int, Packet *p) {
    
     // compare ID of reply to ID of most recent request sent to replying agent
     // if not matching, discard silently
+    int id1 = rep_h->id;
+    int id2 = most_recent->id;
     if(rep_h->id != most_recent->id) {
         //TODO kill?
         return;

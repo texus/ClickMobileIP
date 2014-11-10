@@ -24,7 +24,7 @@ void MobileNodeRouting::push(int, Packet* packet) {
 
     // Send the package to the correct location
     if (_infobase->connected)
-        packet->set_dst_ip_anno(htonl(_infobase->foreignAgent));
+        packet->set_dst_ip_anno(_infobase->foreignAgent);
 
     output(0).push(packet);
 }
