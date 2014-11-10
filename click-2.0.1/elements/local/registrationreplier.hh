@@ -33,8 +33,7 @@ struct __attribute__((__packed__)) registration_reply_header {
 	uint16_t lifetime;		/* 2_3		Number of seconds remaining before registration expired */
 	uint32_t home_addr;		/* 4-7		IP-address of mobile node */
 	uint32_t home_agent;	/* 8-11		IP-address of mobile node's home agent */
-    uint64_t id;
-	/* 12-19 Identification is stored seperately to avoid padding problems */
+    uint64_t id;            /* 12-19    Identification */
 };
 
 CLICK_ENDDECLS

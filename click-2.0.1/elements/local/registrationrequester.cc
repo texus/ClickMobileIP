@@ -4,7 +4,6 @@
 #include <clicknet/ether.h>
 #include <clicknet/ip.h>
 #include <clicknet/udp.h>
-#include <click/timestamp.hh>
 
 #include "registrationrequester.hh"
 #include "mobilityagentadvertiser.hh"
@@ -19,7 +18,7 @@ int RegistrationRequester::configure(Vector<String>& conf, ErrorHandler *errh) {
 	if (cp_va_kparse(conf, this, errh, 
 			"INFOBASE", cpkP + cpkM, cpElement, &_infobase, 
 			cpEnd) < 0) 
-		return -1; //TODO add constructor arguments
+		return -1;
 
     _timer.initialize(this);
     _timer.schedule_after_msec(1000);
@@ -33,14 +32,18 @@ void RegistrationRequester::push(int, Packet *p) {
 	click_ip *adv_iph = (click_ip*)p->data();
 	advertisement_header *adv_advh = (advertisement_header*)(adv_iph + 1);
 	mobile_advertisement_header *adv_mobileh = (mobile_advertisement_header*)(adv_advh + 1);
-	//TODO discard to an output[1]?
-	//p->kill();
 
 	// Check source address of advertisement
 	in_addr adv_src_addr = adv_iph->ip_src;
-	// Check if in home network //TODO check advertisement flags (home agent bit set, etc...)?
+
+    // advertising as home or foreign agent?
+    uint8_t flags = adv_mobileh->flags;
+    bool home_agent = (flags >> 5) & 1;
+    bool foreign_agent = (flags >> 4) & 1;
+    
+	// Check if in home network 
 	if(adv_src_addr == _infobase->homeAgent) {
-		if(_infobase->foreignAgent != _infobase->homeAgent) {
+		if(_infobase->foreignAgent != _infobase->homeAgent && home_agent) {
 			// send deregistration request
 			Packet *packet = createRequest(adv_src_addr, 0, _infobase->homeAddress);
 			if(packet != 0){
@@ -48,7 +51,7 @@ void RegistrationRequester::push(int, Packet *p) {
 			}
 		}
 	}
-	else {
+	else if(foreign_agent) {
 		// ProcessAdvertisements element checks if advertisement needs to be sent to requester
 		// Only sends advertisement if either registration lifetime is ending OR no more advertisements are being
 		// received for current COA
@@ -63,39 +66,39 @@ void RegistrationRequester::push(int, Packet *p) {
 void RegistrationRequester::run_timer(Timer *timer) {
 
     // decrease remaining lifetime of pending requests
+    Vector<Vector<pending_request>::iterator> elementsToBeRemoved;
     for(Vector<pending_request>::iterator it = _infobase->pending.begin(); it != _infobase->pending.end(); ++it) {
         uint16_t lifetime = ntohs(it->remaining_lifetime);
-        if(lifetime > 1) {
+        if(lifetime > 0) {
             --lifetime;
             it->remaining_lifetime = htons(lifetime);
         }
         else {
             // remove pending requests whose lifetime has expired
         }
-        // when no reply has been received within reasonable time, another registration request may be transmitted! //TODO
+        // when no reply has been received within reasonable time, another registration request MAY be transmitted! //TODO
     }
 
     timer->schedule_after_msec(1000);
 }
 
 Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, uint32_t co_addr) {
-
+    // save new request to pending requests
 	pending_request new_req;
 	//TODO save link layer address for foreign agent?
 	new_req.ip_dst = ip_dst;
 	new_req.co_addr = co_addr;
-	//TODO id?
+    uint64_t id = 0; //TODO correct value for id?
+	new_req.id = id;
 	new_req.requested_lifetime = lifetime;
 	new_req.remaining_lifetime = lifetime;
 	_infobase->pending.push_back(new_req);
 
-	// Make the registration request packet
+	// make the packet
 	int packet_size = sizeof(click_ip) + sizeof(click_udp) + sizeof(registration_request_header);
 	int headroom = sizeof(click_ether);
-
 	WritablePacket *packet = Packet::make(headroom, 0, packet_size, 0);
 
-	// Check if packet correctly created
 	if(packet == 0) {
 		click_chatter("Could not make packet");
 		return 0;
@@ -105,15 +108,14 @@ Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, 
 
 	// add the IP header
 	click_ip *ip_head = (click_ip*)packet->data();
-	// set IP fields to correct values
 	ip_head->ip_v = 4;
 	ip_head->ip_hl = 5;
 	ip_head->ip_tos = 0; // Best-Effort
 	ip_head->ip_len = htons(packet_size);
 	//TODO ip-id necessary?
 	ip_head->ip_ttl = 64; //TODO set to 1 if broadcasting request to all mobile agents
-	ip_head->ip_p = 17; //UDP protocol
-	ip_head->ip_src = _infobase->homeAddress; // Home address is assumed to be known in this project
+	ip_head->ip_p = 17; // UDP protocol
+	ip_head->ip_src = _infobase->homeAddress; // mobile node home address is assumed to be known in this project
 	ip_head->ip_dst = ip_dst; //TODO if foreign agent IP-address is not known, set to 255.255.255.255 ("all mobility agents"). Don't we always know it???
 	ip_head->ip_sum = click_in_cksum((unsigned char*)ip_head, sizeof(click_ip));
 	// set destination in annotation
@@ -129,11 +131,8 @@ Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, 
 
 	// add Mobile IP fields
 	registration_request_header *req_head = (registration_request_header*)(udp_head+1);
-
-	// Set type
-	req_head->type = 1; //Type = 1 (Registration Request)
-	// Set flags
-	req_head->flags =	(0 << 7)		// Simultaneous bindings: not supported in this project
+	req_head->type = 1; // Registration Request
+	req_head->flags =	(0 << 7)	// Simultaneous bindings: not supported in this project
 						+ (0 << 6)	// Broadcast datagrams //TODO check when to turn on
 						+ (0 << 5)	// Decapsulation by mobile node: only when registering co-located COA (not supported)
 						+ (0 << 4)	// Minimal encapsulation //TODO check when to turn on.
@@ -141,18 +140,10 @@ Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, 
 						+ (0 << 2)	// r, always sent as 0
 						+ (0 << 1)	// Reverse tunnelling //TODO check if supported?
 						+ (0);		// x, always sent as 0
-
-	// Set lifetime
 	req_head->lifetime = lifetime; //TODO If not specified in advertisement, use (ADJUSTABLE) default ICMP Router Advertisement lifetime 
-
-	//Set home address 
 	req_head->home_addr = _infobase->homeAddress.addr();
 	req_head->home_agent = _infobase->homeAgent.addr();
 	req_head->co_addr = co_addr;
-    
-    Timestamp stamp;
-    stamp.assign_now();
-    uint32_t id = stamp.subsec(); //TODO what is the right value to use?
     req_head->id = id;
 
 	return packet;

@@ -21,18 +21,17 @@ int RelayRegistration::configure(Vector<String> &conf, ErrorHandler *errh) {
 }
 
 void RelayRegistration::push(int, Packet *p) {
+    // get relevant headers
     click_ip *ip_h = (click_ip *)p->data();
     click_udp *udp_h = (click_udp *)(ip_h + 1);
     uint32_t packet_size = p->length();
+
+    // relay registration request
     if(packet_size == sizeof(click_ip) + sizeof(click_udp) + sizeof(registration_request_header)) {
         registration_request_header *req_h = (registration_request_header*)(udp_h + 1);
         if(req_h->type == 1) {
-            // relaying registration request
- 
-
             // check if home address does not belong to network interface of foreign agent //TODO
-            // if acting as home agent, send packet to registration replier //TODO
-            // else, reject using code 136
+            // if acting as home agent, send packet to home agent else reject with code 136 //TODO
             
             // if UDP checksum not 0, discard silently
             if(udp_h->uh_sum != 0) {
@@ -46,23 +45,23 @@ void RelayRegistration::push(int, Packet *p) {
                 // TODO send reply message
                 // Packet *packet = createReply(70);
                 // output(0).push(packet);
+                return;
             }
 
             // add pending request to visitor table
             visitor_entry entry;
             // link-layer source address of mobile node //TODO
-            entry.ip_src = ip_h->ip_src; // mobile node Home Address //TODO correct address?
-            entry.ip_dst = ip_h->ip_dst; //TODO correct address
+            entry.ip_src = ip_h->ip_src; // mobile node Home Address
+            entry.ip_dst = ip_h->ip_dst;
             entry.udp_src = udp_h->uh_sport; 
-            entry.home_agent = IPAddress(req_h->home_agent); // Home Agent Address
+            entry.home_agent = IPAddress(req_h->home_agent);
             entry.id = req_h->id;
-            entry.requested_lifetime = req_h->lifetime;
-            entry.remaining_lifetime = req_h->lifetime;
+            entry.requested_lifetime = ntohs(req_h->lifetime);
+            entry.remaining_lifetime = ntohs(req_h->lifetime);
             _infobase->pending_requests.push_back(entry);
 
             // relay to home agent
             WritablePacket *packet = p->uniqueify();
-
             click_ip *ip_head = (click_ip *)packet->data();
             click_udp *udp_head = (click_udp *)(ip_head + 1);
             // set IP fields
@@ -71,37 +70,33 @@ void RelayRegistration::push(int, Packet *p) {
             ip_head->ip_src = _infobase->address;
             IPAddress dst = IPAddress(req_h->home_agent);
             ip_head->ip_dst = dst.in_addr();
-
             // set annotation
             packet->set_dst_ip_anno(ip_head->ip_dst);
-
             // set UDP fields
             uint16_t udp_src_prt = ntohs(udp_h->uh_sport);
             udp_head->uh_sport = htons(434);
             udp_head->uh_dport = htons(udp_src_prt); 
             udp_head->uh_sum = 0;
-
-            //relay to home agent 
             output(1).push(packet);
         }    
     }
-
+    // relay registration reply
     else if(packet_size = sizeof(click_ip) + sizeof(click_udp) + sizeof(registration_reply_header) + sizeof(uint64_t)) {
         registration_reply_header *rep_h = (registration_reply_header*)(udp_h + 1);
         if(rep_h->type == 3) {
-            // relaying registration reply
 
             // if UDP checksum not 0, discard silently
             if(udp_h->uh_sum != 0) {
                 //TODO kill packet?
                 return;
             }
+
             // if no pending request with same home address as home address in reply, discard silently
             visitor_entry entry;
             bool corresponding_request = false;
             Vector<visitor_entry>::iterator it;
             for(it = _infobase->pending_requests.begin(); it != _infobase->pending_requests.end(); ++it) {
-                if(it->ip_src == IPAddress(rep_h->home_addr) && it->id == rep_h->id) { 
+                if(it->ip_src == IPAddress(rep_h->home_addr) /*&& it->id == rep_h->id*/) { 
                     corresponding_request = true;
                     entry = *it;
                     break;
@@ -113,67 +108,43 @@ void RelayRegistration::push(int, Packet *p) {
                 return;
             }
 
-            // update visitor list
-            // if accepted -> set current
             uint8_t code = rep_h->code;
             if(code == 0 || code == 1) {
-                // request was accepted
-                //TODO update lifetime
-                _infobase->current_registrations.insert(entry.ip_src, entry);
-
-                // remove pending
-                _infobase->pending_requests.erase(it);
-
+                // add accepted registration to current visitor list
+                uint16_t granted_lifetime = ntohs(rep_h->lifetime);
+                if(granted_lifetime != 0) {
+                    uint16_t original_lifetime = entry.requested_lifetime;
+                    uint16_t lifetime = entry.remaining_lifetime - (original_lifetime - granted_lifetime);
+                }
+                else {
+                    //TODO node is deregistering, remove from visitor list
+                }
             }
-            // if accepted & lifetime = 0 -> remove from visitor list (node has deregistered) //TODO
-
-            // if denied: remove pending request entry //TODO
+             // remove pending request
+            _infobase->pending_requests.erase(it);
 
             // relay to mobile node
             WritablePacket *packet = p->uniqueify();
-
             click_ip *ip_head = (click_ip *)packet->data();
             click_udp *udp_head = (click_udp *)(ip_head + 1);
 
-            // set ip src
+            // set IP fields
             ip_head->ip_src = _infobase->address;
-            
-            // set ip dest
             IPAddress dst = IPAddress(rep_h->home_addr);
             ip_head->ip_dst = dst.in_addr();
 
             // set annotations
             packet->set_dst_ip_anno(ip_head->ip_dst);
 
+            // set UDP fields
             uint16_t udp_src_prt = ntohs(udp_h->uh_sport);
-
-            // set udp source
             udp_head->uh_sport = htons(434);
-            // set udp dest
             udp_head->uh_dport = htons(udp_src_prt);
 
             // relay to mobile node
             output(0).push(packet);
-            
         }
     }
-
-
-    /*
-    * Registration denied by foreign agent
-    *   64      reason unspecified
-    *   ...
-    *   (66      insufficient resources (if max number of pending registrations exceeded))
-    *   ...
-    *   70      poorly formed Request
-    *   71      poorly formed Reply
-    *   72      requested encapsulation unavailable
-    *   ...
-    *   (78      registration timeout)
-    *   ...
-    *   80      home network unreachable (ICMP error received)
-    *   ...
-    */
 }
 
 void RelayRegistration::run_timer(Timer *timer) {
@@ -203,12 +174,6 @@ void RelayRegistration::run_timer(Timer *timer) {
             // remove from visitor list //TODO
         //}
     }
-}
-
-Packet* RelayRegistration::createReply(uint8_t code) {
-        //TODO
-        //WriteablePacket *packet = ; 
-        
 }
 
 CLICK_ENDDECLS

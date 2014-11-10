@@ -47,8 +47,6 @@ void RegisterNode::push(int, Packet *p) {
     // if not matching, discard silently
     if(rep_id != most_recent->id) {
         //TODO kill?
-        // remove pending request
-        _infobase->pending.erase(most_recent);
         return;
     }
 
