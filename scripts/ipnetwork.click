@@ -124,7 +124,7 @@ mobile_node[1]
 	-> mobile_node;
 
 //mobility_emulator :: MobilityEmulator(INTERVAL 5, CONNECTED_NETWORKS "2, 1");
-mobility_emulator :: MobilityEmulator(CONNECTED_NETWORK 2);
+mobility_emulator :: MobilityEmulator(CONNECTED_NETWORK 1);
 
 mobile_node[0]
 	-> [0]mobility_emulator[0]

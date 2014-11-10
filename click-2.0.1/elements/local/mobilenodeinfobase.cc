@@ -19,7 +19,7 @@ int MobileNodeInfobase::configure(Vector<String> &conf, ErrorHandler *errh) {
         return -1;
 
     // Foreign agent is set to home agent to indicate that the mobile node is not on a foreign agent
-    foreignAgent = homeAgent;
+    foreignAgent = IPAddress(0);
 
     // TODO: REMOVE THIS WHEN NO LONGER HARDCODING MOBILE NODE POSITION
     //connected = true;

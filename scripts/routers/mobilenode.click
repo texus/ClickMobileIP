@@ -14,7 +14,7 @@ $addr_info, $gateway
     ip :: Strip(14)
     //-> IPPrint("test")
     -> CheckIPHeader
-   -> regs::IPClassifier(src or dst udp port 434, -)[1]
+    -> regs::IPClassifier(src or dst udp port 434, -)[1]
     -> rt :: StaticIPLookup(
         $addr_info:ip/32 0,
         $addr_info:ipnet 1,
@@ -24,8 +24,8 @@ $addr_info, $gateway
 	arpt :: Tee(1);
 
     regs[0]
-    ->RegisterNode(infobase)
-    ->Discard //TODO resend requests if applicable
+        -> RegisterNode(infobase)
+        -> Discard //TODO resend requests if applicable
 	
 	// Input and output paths for eth0
 	c0 :: Classifier(12/0806 20/0001, 12/0806 20/0002, -);

@@ -62,7 +62,7 @@ void RegisterNode::push(int, Packet *p) {
         // request accepted, adapt mobile node infobase
         if(/*rep_h->lifetime == 0 && */ip_h->ip_src == _infobase->homeAgent) {
             // returning to home network // TODO should this be done BEFORE sending deregistration request?
-            _infobase->connected = false;
+            _infobase->connected = true;
             _infobase->foreignAgent = _infobase->homeAgent;
             _infobase->lifetime = 0;
         }

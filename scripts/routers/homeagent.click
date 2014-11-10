@@ -17,7 +17,7 @@ $private_address, $public_address, $default_gateway
 	// Shared IP input path and routing table
 	ip :: Strip(14)
 	-> CheckIPHeader
-    -> regs::IPClassifier(src udp port 434, -)[1]
+    -> regs::IPClassifier(dst udp port 434, -)[1]
 	-> rt :: StaticIPLookup(
 		$private_address:ip/32 0,
 		$public_address:ip/32 0,
@@ -73,7 +73,7 @@ $private_address, $public_address, $default_gateway
     // Registration replies
     regs[0]
         -> RegistrationReplier(infobase)
-        -> [0]arpq1;
+        -> [0]arpq0;
 
     dt0[1] -> ICMPError($private_address, timeexceeded) -> rt;
     fr0[1] -> ICMPError($private_address, unreachable, needfrag) -> rt;
