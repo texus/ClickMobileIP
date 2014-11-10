@@ -61,14 +61,12 @@ $private_address, $public_address, $default_gateway
 	checkIfEncapsulated[0]
 	    -> StripIPHeader
 	    -> CheckIPHeader
-	    -> ForeignAgentRouting(infobase)
 	    -> [0]arpq0
 
     // Relay registration requests and replies
     regs[0]
         -> relayRegistration :: RelayRegistration(infobase)[0]
         -> SetIPChecksum
-        -> ForeignAgentRouting(infobase)
         -> [0]arpq0
 
     relayRegistration[1]
