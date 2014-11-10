@@ -28,6 +28,7 @@ public:
 
 private:
     ForeignAgentInfobase *_infobase;
+    IPAddress _privateIP;
     Timer _timer;
 
 };

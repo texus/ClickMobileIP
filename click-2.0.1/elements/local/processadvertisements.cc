@@ -35,11 +35,11 @@ void ProcessAdvertisements::push(int, Packet* packet)
             mobile_advertisement_header* madvh = (mobile_advertisement_header*)(advh + 1);
             if (madvh->type == 16)
             {
-                HashMap<IPAddress, Packet*>::Pair* p = _infobase->advertisements.find_pair(madvh->address);
+                HashMap<IPAddress, Packet*>::Pair* p = _infobase->advertisements.find_pair(advh->address);
                 if (p != 0)
                     p->value->kill();
 
-                _infobase->advertisements.insert(madvh->address, packet->clone());
+                _infobase->advertisements.insert(advh->address, packet->clone());
 
                 // If there is no connection yet then try to connect to this agent
                 if (!_infobase->connected)

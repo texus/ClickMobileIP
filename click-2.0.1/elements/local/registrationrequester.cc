@@ -26,6 +26,7 @@ int RegistrationRequester::configure(Vector<String>& conf, ErrorHandler *errh) {
 }
 
 void RegistrationRequester::push(int, Packet *p) {
+
 	// It is assumed that all incoming packets are advertisments //TODO other methods of discovering FA's
 
 	// Get relevant advertisement headers

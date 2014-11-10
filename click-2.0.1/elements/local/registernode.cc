@@ -22,13 +22,12 @@ void RegisterNode::push(int, Packet *p) {
     click_ip *ip_h = (click_ip *)p->data();
     click_udp *udp_h = (click_udp *)(ip_h + 1);
     registration_reply_header *rep_h = (registration_reply_header *)(udp_h + 1);
-    //uint64_t rep_id = *((uint64_t*)(rep_h + 1)); // TODO: Byte order of 64-bit number?
 
     // get corresponding pending request
     Vector<pending_request>::iterator most_recent;
     bool corresponding_found = false;
     for(Vector<pending_request>::iterator it = _infobase->pending.begin();it != _infobase->pending.end(); ++it) {
-        if(it->co_addr == ip_h->ip_src) {
+        if(it->ip_dst == ip_h->ip_src) {
             corresponding_found = true;
             most_recent = it;
             break;

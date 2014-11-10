@@ -13,7 +13,10 @@ RelayRegistration::RelayRegistration(): _timer(this) {}
 RelayRegistration::~RelayRegistration() {}
 
 int RelayRegistration::configure(Vector<String> &conf, ErrorHandler *errh) {
-    if(cp_va_kparse(conf, this, errh, "INFOBASE", cpkP + cpkM, cpElement, &_infobase, cpEnd) < 0) return -1;
+    if(cp_va_kparse(conf, this, errh,
+                    "INFOBASE", cpkP + cpkM, cpElement, &_infobase,
+                    "PRIVATE_IP", cpkM, cpIPAddress, &_privateIP,
+                    cpEnd) < 0) return -1;
 
     _timer.initialize(this);
     _timer.schedule_after_msec(1000);
@@ -129,7 +132,7 @@ void RelayRegistration::push(int, Packet *p) {
             click_udp *udp_head = (click_udp *)(ip_head + 1);
 
             // set IP fields
-            ip_head->ip_src = _infobase->address;
+            ip_head->ip_src = _privateIP;
             IPAddress dst = IPAddress(rep_h->home_addr);
             ip_head->ip_dst = dst.in_addr();
 
