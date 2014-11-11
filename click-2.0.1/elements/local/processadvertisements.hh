@@ -9,26 +9,26 @@
 CLICK_DECLS
 
 class ProcessAdvertisements : public Element {
-	public:
-		ProcessAdvertisements();
-		~ProcessAdvertisements();
+    public:
+        ProcessAdvertisements();
+        ~ProcessAdvertisements();
 
-		const char *class_name() const	{ return "ProcessAdvertisements"; }
-		const char *port_count() const 	{ return "1/2"; }
-		const char *processing() const	{ return PUSH; }
+        const char *class_name() const { return "ProcessAdvertisements"; }
+        const char *port_count() const { return "1/2"; }
+        const char *processing() const { return PUSH; }
 
-		int configure(Vector<String>&, ErrorHandler*);
+        int configure(Vector<String>&, ErrorHandler*);
 
-		void push(int, Packet*);
+        void push(int, Packet*);
 
-		void run_timer(Timer*);
+        void run_timer(Timer*);
 
-	private:
-	    MobileNodeInfobase* _infobase;
+    private:
+        MobileNodeInfobase* _infobase;
 
-	    Vector<Pair<IPAddress, Timer> > _timers;
+        Vector<Pair<IPAddress, Timer> > _timers;
 
-	    Timestamp _lastRegistrationAttempt;
+        Timestamp _lastRegistrationAttempt;
 };
 
 CLICK_ENDDECLS

@@ -35,7 +35,7 @@ void RelayRegistration::push(int, Packet *p) {
         if(req_h->type == 1) {
             // check if home address does not belong to network interface of foreign agent //TODO
             // if acting as home agent, send packet to home agent else reject with code 136 //TODO
-            
+
             // if UDP checksum not 0, discard silently
             if(udp_h->uh_sum != 0) {
                 //TODO kill packet?
@@ -56,7 +56,7 @@ void RelayRegistration::push(int, Packet *p) {
             // link-layer source address of mobile node //TODO
             entry.ip_src = ip_h->ip_src; // mobile node Home Address
             entry.ip_dst = ip_h->ip_dst;
-            entry.udp_src = udp_h->uh_sport; 
+            entry.udp_src = udp_h->uh_sport;
             entry.home_agent = IPAddress(req_h->home_agent);
             entry.id = req_h->id;
             entry.requested_lifetime = ntohs(req_h->lifetime);
@@ -78,10 +78,10 @@ void RelayRegistration::push(int, Packet *p) {
             // set UDP fields
             uint16_t udp_src_prt = ntohs(udp_h->uh_sport);
             udp_head->uh_sport = htons(434);
-            udp_head->uh_dport = htons(udp_src_prt); 
+            udp_head->uh_dport = htons(udp_src_prt);
             udp_head->uh_sum = 0;
             output(1).push(packet);
-        }    
+        }
     }
     // relay registration reply
     else if(packet_size = sizeof(click_ip) + sizeof(click_udp) + sizeof(registration_reply_header)) {
@@ -99,15 +99,15 @@ void RelayRegistration::push(int, Packet *p) {
             bool corresponding_request = false;
             Vector<visitor_entry>::iterator it;
             for(it = _infobase->pending_requests.begin(); it != _infobase->pending_requests.end(); ++it) {
-                if(it->ip_src == IPAddress(rep_h->home_addr) /*&& it->id == rep_h->id*/) { 
+                if(it->ip_src == IPAddress(rep_h->home_addr) /*&& it->id == rep_h->id*/) {
                     corresponding_request = true;
                     entry = *it;
                     break;
-                }          
+                }
             }
 
-            if(!corresponding_request) {    
-                //TODO kill packet?    
+            if(!corresponding_request) {
+                //TODO kill packet?
                 return;
             }
 
@@ -158,7 +158,7 @@ void RelayRegistration::run_timer(Timer *timer) {
             --lifetime;
             it->remaining_lifetime = htons(lifetime);
             if(it->requested_lifetime - it->remaining_lifetime > 7) {
-                // if request is pending for longer than 7 seconds, send timeout reply + delete from list //TODO                
+                // if request is pending for longer than 7 seconds, send timeout reply + delete from list //TODO
             }
         }
         else {
@@ -167,11 +167,11 @@ void RelayRegistration::run_timer(Timer *timer) {
     }
 
     // lower remaining lifetime for current registrations
-    for(HashMap<IPAddress, visitor_entry>::iterator it = _infobase->current_registrations.begin(); 
+    for(HashMap<IPAddress, visitor_entry>::iterator it = _infobase->current_registrations.begin();
             it != _infobase->current_registrations.end(); ++it) {
         //if(it->remaining_lifetime > 1) {
         //    --(it->remainig_lifetime);
-        //}    
+        //}
        // else {
 
             // remove from visitor list //TODO

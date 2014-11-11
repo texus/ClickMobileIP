@@ -8,20 +8,20 @@
 CLICK_DECLS
 
 class MobileNodeRouting : public Element {
-	public:
-		MobileNodeRouting();
-		~MobileNodeRouting();
+    public:
+        MobileNodeRouting();
+        ~MobileNodeRouting();
 
-		const char *class_name() const	{ return "MobileNodeRouting"; }
-		const char *port_count() const 	{ return "1/1"; }
-		const char *processing() const	{ return PUSH; }
+        const char *class_name() const { return "MobileNodeRouting"; }
+        const char *port_count() const { return "1/1"; }
+        const char *processing() const { return PUSH; }
 
-		int configure(Vector<String>&, ErrorHandler*);
+        int configure(Vector<String>&, ErrorHandler*);
 
-		void push(int, Packet*);
+        void push(int, Packet*);
 
-	private:
-	    MobileNodeInfobase* _infobase;
+    private:
+        MobileNodeInfobase* _infobase;
 };
 
 CLICK_ENDDECLS

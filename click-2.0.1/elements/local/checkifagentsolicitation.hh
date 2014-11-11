@@ -6,17 +6,17 @@
 CLICK_DECLS
 
 class CheckIfAgentSolicitation : public Element {
-	public:
-		CheckIfAgentSolicitation();
-		~CheckIfAgentSolicitation();
+    public:
+        CheckIfAgentSolicitation();
+        ~CheckIfAgentSolicitation();
 
-		const char *class_name() const	{ return "CheckIfAgentSolicitation"; }
-		const char *port_count() const 	{ return "1/2"; }
-		const char *processing() const	{ return PUSH; }
+        const char *class_name() const { return "CheckIfAgentSolicitation"; }
+        const char *port_count() const { return "1/2"; }
+        const char *processing() const { return PUSH; }
 
-		int configure(Vector<String>&, ErrorHandler*);
+        int configure(Vector<String>&, ErrorHandler*);
 
-		void push(int, Packet*);
+        void push(int, Packet*);
 };
 
 CLICK_ENDDECLS

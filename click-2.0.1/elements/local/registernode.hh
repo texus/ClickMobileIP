@@ -7,7 +7,7 @@
 CLICK_DECLS
 
 /**
-* Element receives registration replies directed to mobile node, 
+* Element receives registration replies directed to mobile node,
 * and adds info about current registration to mobile node infobase.
 * Also resends request when denial code indicates that denial is 'reparable'.
 */
@@ -32,6 +32,6 @@ private:
     Timer _timer;
 };
 
-CLICK_ENDDECLS 
+CLICK_ENDDECLS
 
 #endif

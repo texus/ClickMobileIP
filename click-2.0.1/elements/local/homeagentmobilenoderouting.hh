@@ -8,20 +8,20 @@
 CLICK_DECLS
 
 class HomeAgentMobileNodeRouting : public Element {
-	public:
-		HomeAgentMobileNodeRouting();
-		~HomeAgentMobileNodeRouting();
+    public:
+        HomeAgentMobileNodeRouting();
+        ~HomeAgentMobileNodeRouting();
 
-		const char *class_name() const	{ return "HomeAgentMobileNodeRouting"; }
-		const char *port_count() const 	{ return "1/2"; }
-		const char *processing() const	{ return PUSH; }
+        const char *class_name() const { return "HomeAgentMobileNodeRouting"; }
+        const char *port_count() const { return "1/2"; }
+        const char *processing() const { return PUSH; }
 
-		int configure(Vector<String>&, ErrorHandler*);
+        int configure(Vector<String>&, ErrorHandler*);
 
-		void push(int, Packet*);
+        void push(int, Packet*);
 
-	private:
-	    HomeAgentInfobase* _infobase;
+    private:
+        HomeAgentInfobase* _infobase;
 };
 
 CLICK_ENDDECLS

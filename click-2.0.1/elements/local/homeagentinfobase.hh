@@ -14,19 +14,19 @@ struct MobileNodeInfo
 };
 
 class HomeAgentInfobase : public Element {
-	public:
-		HomeAgentInfobase();
-		~HomeAgentInfobase();
+    public:
+        HomeAgentInfobase();
+        ~HomeAgentInfobase();
 
-		const char *class_name() const	{ return "HomeAgentInfobase"; }
-		const char *port_count() const 	{ return "0/0"; }
+        const char *class_name() const { return "HomeAgentInfobase"; }
+        const char *port_count() const { return "0/0"; }
 
-		int configure(Vector<String>&, ErrorHandler*);
+        int configure(Vector<String>&, ErrorHandler*);
 
-	public:
+    public:
         IPAddress home_agent_address;
 
-	    Vector<MobileNodeInfo> mobileNodesInfo;
+        Vector<MobileNodeInfo> mobileNodesInfo;
 };
 
 CLICK_ENDDECLS

@@ -8,7 +8,7 @@ CLICK_DECLS
 ForeignAgentInfobase::ForeignAgentInfobase()
 {}
 
-ForeignAgentInfobase::~ForeignAgentInfobase() 
+ForeignAgentInfobase::~ForeignAgentInfobase()
 {}
 
 int ForeignAgentInfobase::configure(Vector<String>& conf, ErrorHandler *errh) {

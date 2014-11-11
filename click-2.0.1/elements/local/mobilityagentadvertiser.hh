@@ -6,34 +6,34 @@
 CLICK_DECLS
 
 class MobilityAgentAdvertiser : public Element {
-	public:
-		MobilityAgentAdvertiser();
-		~MobilityAgentAdvertiser();
+    public:
+        MobilityAgentAdvertiser();
+        ~MobilityAgentAdvertiser();
 
-		const char *class_name() const	{ return "MobilityAgentAdvertiser"; }
-		const char *port_count() const 	{ return "0-1/1"; }
-		const char *processing() const	{ return PUSH; }
+        const char *class_name() const { return "MobilityAgentAdvertiser"; }
+        const char *port_count() const { return "0-1/1"; }
+        const char *processing() const { return PUSH; }
 
-		int configure(Vector<String>&, ErrorHandler*);
+        int configure(Vector<String>&, ErrorHandler*);
 
-		void push(int, Packet*);
-		void run_timer(Timer *);
+        void push(int, Packet*);
+        void run_timer(Timer *);
 
-	private:
-	    void sendPacket(IPAddress destinationIP);
+    private:
+        void sendPacket(IPAddress destinationIP);
 
-	private:
-	    IPAddress _srcIp;
-	    IPAddress _careOfAddress;
-	    uint16_t  _lifetime;
+    private:
+        IPAddress _srcIp;
+        IPAddress _careOfAddress;
+        uint16_t  _lifetime;
 
-		int _interval;
-		Timer _timer;
+        int _interval;
+        Timer _timer;
 
-		uint16_t _sequenceNr;
+        uint16_t _sequenceNr;
 
-		bool _homeAgent;
-		bool _foreignAgent;
+        bool _homeAgent;
+        bool _foreignAgent;
 };
 
 struct advertisement_header {

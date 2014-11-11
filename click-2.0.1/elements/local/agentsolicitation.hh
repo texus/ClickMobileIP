@@ -8,24 +8,24 @@
 CLICK_DECLS
 
 class AgentSolicitation : public Element {
-	public:
-		AgentSolicitation();
-		~AgentSolicitation();
+    public:
+        AgentSolicitation();
+        ~AgentSolicitation();
 
-		const char *class_name() const	{ return "AgentSolicitation"; }
-		const char *port_count() const 	{ return "0/1"; }
-		const char *processing() const	{ return PUSH; }
+        const char *class_name() const { return "AgentSolicitation"; }
+        const char *port_count() const { return "0/1"; }
+        const char *processing() const { return PUSH; }
 
-		int configure(Vector<String>&, ErrorHandler*);
+        int configure(Vector<String>&, ErrorHandler*);
 
-		void run_timer(Timer*);
+        void run_timer(Timer*);
 
-	private:
-	    MobileNodeInfobase* _infobase;
-	    IPAddress _srcIp;
-	    Timer _timer;
+    private:
+        MobileNodeInfobase* _infobase;
+        IPAddress _srcIp;
+        Timer _timer;
 
-	    unsigned int _messagesSendInRow;
+        unsigned int _messagesSendInRow;
 };
 
 struct agent_solicitation_header {

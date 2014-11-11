@@ -48,7 +48,7 @@ void ProcessAdvertisements::push(int, Packet* packet)
                     p->value->kill();
                 }
 
-                _infobase->advertisements.insert(advh->address, packet->clone());
+                _infobase->advertisements.insert(advh->address, packet);
 
                 _timers.push_back(Pair<IPAddress, Timer>(advh->address, Timer(this)));
                 _timers.back().second.initialize(this);
@@ -99,16 +99,16 @@ void ProcessAdvertisements::run_timer(Timer* timer)
     {
         lifetime--;
         advh->lifetime = htons(lifetime);
-        
+
         timer->schedule_after_msec(1000);
     }
     else // Lifetime expired
     {
         if ((_infobase->connected) && (_infobase->foreignAgent == address))
             connectedAgentUnavailable = true;
-        
+
         _infobase->advertisements.erase(address);
-        
+
         for (Vector<Pair<IPAddress, Timer> >::iterator it = _timers.begin(); it != _timers.end(); ++it)
         {
             if (&it->second == timer)

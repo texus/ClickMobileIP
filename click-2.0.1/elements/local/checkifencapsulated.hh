@@ -6,17 +6,17 @@
 CLICK_DECLS
 
 class CheckIfEncapsulated : public Element {
-	public:
-		CheckIfEncapsulated();
-		~CheckIfEncapsulated();
+    public:
+        CheckIfEncapsulated();
+        ~CheckIfEncapsulated();
 
-		const char *class_name() const	{ return "CheckIfEncapsulated"; }
-		const char *port_count() const 	{ return "1/2"; }
-		const char *processing() const	{ return PUSH; }
+        const char *class_name() const { return "CheckIfEncapsulated"; }
+        const char *port_count() const { return "1/2"; }
+        const char *processing() const { return PUSH; }
 
-		int configure(Vector<String>&, ErrorHandler*);
+        int configure(Vector<String>&, ErrorHandler*);
 
-		void push(int, Packet*);
+        void push(int, Packet*);
 };
 
 CLICK_ENDDECLS

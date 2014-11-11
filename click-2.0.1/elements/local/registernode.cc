@@ -34,8 +34,8 @@ void RegisterNode::push(int, Packet *p) {
             break;
         }
     }
-    
-    if(!corresponding_found) {  
+
+    if(!corresponding_found) {
         return;
      }
 
@@ -45,8 +45,8 @@ void RegisterNode::push(int, Packet *p) {
         // remove pending request
         _infobase->pending.erase(most_recent);
         return;
-    }   
-   
+    }
+
     // compare ID of reply to ID of most recent request sent to replying agent
     // if not matching, discard silently
     int id1 = rep_h->id;
@@ -60,7 +60,7 @@ void RegisterNode::push(int, Packet *p) {
     uint8_t code = rep_h->code;
     if(code == 0 || code == 1) {
         _timer.clear();
-    
+
         // request accepted, adapt mobile node infobase
         if(/*rep_h->lifetime == 0 && */ip_h->ip_src == _infobase->homeAgent) {
             // returning to home network // TODO should this be done BEFORE sending deregistration request?
@@ -78,10 +78,10 @@ void RegisterNode::push(int, Packet *p) {
             uint16_t decreased = requested_lifetime - granted_lifetime;
             uint16_t lifetime = most_recent->remaining_lifetime - decreased;
             _infobase->lifetime = lifetime;
-            
+
             _timer.schedule_after_sec(1);
         }
-    
+
         // remove pending request
         _infobase->pending.erase(most_recent);
     }
@@ -96,7 +96,7 @@ void RegisterNode::push(int, Packet *p) {
             case 70: case 134:
                 message += "poorly formed Request";
                 break;
-            case 71: 
+            case 71:
                 message += "poorly formed Reply";
                 break;
             case 72:
@@ -109,7 +109,7 @@ void RegisterNode::push(int, Packet *p) {
                 message += "too many simultaneous mobility bindings";
                 break;
             case 136:
-                message += "unknown home agent address"; 
+                message += "unknown home agent address";
                 break;
             default:
                 message += "unknown exception code";
@@ -124,7 +124,7 @@ void RegisterNode::push(int, Packet *p) {
             // if request was denied because home agent address was unknown, error can be 'repaired'
             // TODO set home agent address in infobase & retransmit request
         }
-    }  
+    }
 }
 
 void RegisterNode::run_timer(Timer* timer)
@@ -142,7 +142,7 @@ void RegisterNode::run_timer(Timer* timer)
             if(p != 0)
                 output(0).push(p);
         }
-        if (_infobase->lifetime == 0) 
+        if (_infobase->lifetime == 0)
         {
             _infobase->connected = false;
             //TODO should something else happen here?

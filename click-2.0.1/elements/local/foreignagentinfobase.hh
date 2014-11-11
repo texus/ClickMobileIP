@@ -29,7 +29,7 @@ public:
     int configure(Vector<String>&, ErrorHandler*);
 
     Vector<visitor_entry> pending_requests;
-    HashMap<IPAddress, visitor_entry> current_registrations; 
+    HashMap<IPAddress, visitor_entry> current_registrations;
 
     // TODO care of address
 
