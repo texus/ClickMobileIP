@@ -7,13 +7,14 @@
 
 CLICK_DECLS
 
-RegisterNode::RegisterNode() {}
+RegisterNode::RegisterNode() :_timer(this) {}
 
 RegisterNode::~RegisterNode() {}
 
 int RegisterNode::configure(Vector<String> &conf, ErrorHandler *errh) {
     if(cp_va_kparse(conf, this, errh, "INFOBASE", cpkP + cpkM, cpElement, &_infobase, cpEnd) < 0) return -1;
 
+    _timer.initialize(this);
     return 0;
 }
 
@@ -58,6 +59,8 @@ void RegisterNode::push(int, Packet *p) {
     // check if accepted
     uint8_t code = rep_h->code;
     if(code == 0 || code == 1) {
+        _timer.clear();
+    
         // request accepted, adapt mobile node infobase
         if(/*rep_h->lifetime == 0 && */ip_h->ip_src == _infobase->homeAgent) {
             // returning to home network // TODO should this be done BEFORE sending deregistration request?
@@ -75,6 +78,8 @@ void RegisterNode::push(int, Packet *p) {
             uint16_t decreased = requested_lifetime - granted_lifetime;
             uint16_t lifetime = most_recent->remaining_lifetime - decreased;
             _infobase->lifetime = lifetime;
+            
+            _timer.schedule_after_sec(1);
         }
     
         // remove pending request
@@ -120,6 +125,31 @@ void RegisterNode::push(int, Packet *p) {
             // TODO set home agent address in infobase & retransmit request
         }
     }  
+}
+
+void RegisterNode::run_timer(Timer* timer)
+{
+    // Decrease the registration lifetime
+    if (_infobase->lifetime > 0)
+    {
+        _infobase->lifetime--;
+
+        if (_infobase->lifetime == 3) //TODO get good value for this
+        {
+            // when registration almost expired, look for advertisement of current foreign agent
+            // & relay to element that sends requests
+            Packet *p = _infobase->advertisements[_infobase->foreignAgent];
+            if(p != 0)
+                output(0).push(p);
+        }
+        if (_infobase->lifetime == 0) 
+        {
+            _infobase->connected = false;
+            //TODO should something else happen here?
+        }
+    }
+
+    _timer.schedule_after_sec(1);
 }
 
 CLICK_ENDDECLS

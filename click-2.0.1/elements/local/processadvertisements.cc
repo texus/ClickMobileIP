@@ -6,7 +6,7 @@
 #include "mobilityagentadvertiser.hh"
 
 CLICK_DECLS
-ProcessAdvertisements::ProcessAdvertisements() : _timer(this)
+ProcessAdvertisements::ProcessAdvertisements()
 {}
 
 ProcessAdvertisements::~ProcessAdvertisements()
@@ -19,8 +19,6 @@ int ProcessAdvertisements::configure(Vector<String> &conf, ErrorHandler *errh) {
                      cpEnd) < 0)
         return -1;
 
-    _timer.initialize(this);
-    _timer.schedule_after_msec(1000);
     return 0;
 }
 
@@ -37,9 +35,24 @@ void ProcessAdvertisements::push(int, Packet* packet)
             {
                 HashMap<IPAddress, Packet*>::Pair* p = _infobase->advertisements.find_pair(advh->address);
                 if (p != 0)
+                {
+                    for (Vector<Pair<IPAddress, Timer> >::iterator it = _timers.begin(); it != _timers.end(); ++it)
+                    {
+                        if (it->first == p->key)
+                        {
+                            _timers.erase(it);
+                            break;
+                        }
+                    }
+
                     p->value->kill();
+                }
 
                 _infobase->advertisements.insert(advh->address, packet->clone());
+
+                _timers.push_back(Pair<IPAddress, Timer>(advh->address, Timer(this)));
+                _timers.back().second.initialize(this);
+                _timers.back().second.schedule_after_msec(1000);
 
                 // If there is no connection yet then try to connect to this agent
                 if (!_infobase->connected)
@@ -56,56 +69,54 @@ void ProcessAdvertisements::push(int, Packet* packet)
     output(0).push(packet);
 }
 
-void ProcessAdvertisements::run_timer(Timer* timer){
-
-    // Decrease the registration lifetime
-    if (_infobase->lifetime > 0)
+void ProcessAdvertisements::run_timer(Timer* timer)
+{
+    IPAddress address;
+    Packet* packet;
+    for (Vector<Pair<IPAddress, Timer> >::iterator it = _timers.begin(); it != _timers.end(); ++it)
     {
-        _infobase->lifetime--;
-
-        if (_infobase->lifetime == 3) //TODO get good value for this
+        if (&it->second == timer)
         {
-            // when registration almost expired, look for advertisement of current foreign agent
-            // & relay to element that sends requests
-            Packet *p = _infobase->advertisements[_infobase->foreignAgent];
-            if(p != 0) //TODO safe?
+            HashMap<IPAddress, Packet*>::Pair* p = _infobase->advertisements.find_pair(it->first);
+            if (p == 0)
             {
-                output(1).push(p);
+                click_chatter("Failed to find advertisement for which timer expired");
+                return;
             }
-            
-        }
-        if (_infobase->lifetime == 0) 
-        {
-            //_infobase->connected = false;
-            //TODO should something else happen here?
+
+            address = p->key;
+            packet = p->value;
+            break;
         }
     }
 
-    // Decrease the lifetime of the stored advertisement messages
-    Vector<IPAddress> elementToBeRemoved;
-    for (HashMap<IPAddress, Packet*>::iterator it = _infobase->advertisements.begin(); it != _infobase->advertisements.end(); ++it)
-    {
-        click_ip* iph = (click_ip*)it.pair()->value->data();
-        advertisement_header* advh = (advertisement_header*)(iph + 1);
-        uint16_t lifetime = ntohs(advh->lifetime);
+    click_ip* iph = (click_ip*)packet->data();
+    advertisement_header* advh = (advertisement_header*)(iph + 1);
+    uint16_t lifetime = ntohs(advh->lifetime);
 
-        if (lifetime > 1)
-        {
-            lifetime--;
-            advh->lifetime = htons(lifetime);
-        }
-        else // Lifetime expired
-            elementToBeRemoved.push_back(it.pair()->key);
-    }
-
-    // Remove the advertisement messages of which the lifetime has reached 0
     bool connectedAgentUnavailable = !_infobase->connected;
-    for (Vector<IPAddress>::const_iterator it = elementToBeRemoved.begin(); it != elementToBeRemoved.end(); ++it)
+    if (lifetime > 0)
     {
-        if ((_infobase->connected) && (_infobase->foreignAgent == *it))
+        lifetime--;
+        advh->lifetime = htons(lifetime);
+        
+        timer->schedule_after_msec(1000);
+    }
+    else // Lifetime expired
+    {
+        if ((_infobase->connected) && (_infobase->foreignAgent == address))
             connectedAgentUnavailable = true;
-
-        _infobase->advertisements.erase(*it);
+        
+        _infobase->advertisements.erase(address);
+        
+        for (Vector<Pair<IPAddress, Timer> >::iterator it = _timers.begin(); it != _timers.end(); ++it)
+        {
+            if (&it->second == timer)
+            {
+                _timers.erase(it);
+                break;
+            }
+        }
     }
 
     // Try to connect with another agent when no longer receiving advertisements from currently connected one
@@ -120,8 +131,6 @@ void ProcessAdvertisements::run_timer(Timer* timer){
             output(1).push(_infobase->advertisements.begin().pair()->value);
         }
     }
-
-    timer->schedule_after_msec(1000);
 }
 
 CLICK_ENDDECLS

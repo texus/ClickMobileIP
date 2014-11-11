@@ -2,6 +2,7 @@
 #define CLICK_PROCESSADVERTISEMENTS_HH
 #include <click/element.hh>
 #include <click/timer.hh>
+#include <click/pair.hh>
 
 #include "mobilenodeinfobase.hh"
 
@@ -25,7 +26,7 @@ class ProcessAdvertisements : public Element {
 	private:
 	    MobileNodeInfobase* _infobase;
 
-	    Timer _timer;
+	    Vector<Pair<IPAddress, Timer> > _timers;
 
 	    Timestamp _lastRegistrationAttempt;
 };

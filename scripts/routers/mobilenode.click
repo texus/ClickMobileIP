@@ -25,7 +25,7 @@ $addr_info, $gateway
 
     regs[0]
         -> RegisterNode(infobase)
-        -> Discard //TODO resend requests if applicable
+        -> registrationRequester :: RegistrationRequester(infobase)
 	
 	// Input and output paths for eth0
 	c0 :: Classifier(12/0806 20/0001, 12/0806 20/0002, -);
@@ -51,7 +51,7 @@ $addr_info, $gateway
 	-> [0]arpq0;
 
     processAdvertisements[1]
-        -> RegistrationRequester(infobase)
+        -> registrationRequester
         -> [0]arpq0;
 
     // Send agent solicitations when not connected and there are no advertisements

@@ -24,7 +24,12 @@ public:
     void push(int, Packet*);
 
 private:
+    void run_timer(Timer* timer);
+
+private:
     MobileNodeInfobase *_infobase;
+
+    Timer _timer;
 };
 
 CLICK_ENDDECLS 

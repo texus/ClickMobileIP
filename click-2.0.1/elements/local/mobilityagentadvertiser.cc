@@ -96,7 +96,7 @@ void MobilityAgentAdvertiser::sendPacket(IPAddress destinationIP)
     advh->code = 0; // Also handles normal routing
     advh->addresses = 1;
     advh->addr_size = 2;
-    advh->lifetime = htons(2);
+    advh->lifetime = htons(2); // TODO: Allow changing lifetime
     advh->address = _srcIp;
     advh->addrPreference = 0;
 
