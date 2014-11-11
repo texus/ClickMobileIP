@@ -19,12 +19,14 @@ MobilityAgentAdvertiser::~MobilityAgentAdvertiser()
 int MobilityAgentAdvertiser::configure(Vector<String> &conf, ErrorHandler *errh) {
 
     bool intervalGiven;
+    bool lifetimeGiven;
     if (cp_va_kparse(conf, this, errh,
                      "SRC_IP", cpkM, cpIPAddress, &_srcIp,
                      "CARE_OF_ADDRESS", cpkM, cpIPAddress, &_careOfAddress,
                      "HOME_AGENT", cpkM, cpBool, &_homeAgent,
                      "FOREIGN_AGENT", cpkM, cpBool, &_foreignAgent,
                      "INTERVAL", cpkC, &intervalGiven, cpUnsigned, &_interval,
+                     "LIFETIME", cpkC, &lifetimeGiven, cpUnsigned, &_lifetime,
                      cpEnd) < 0)
         return -1;
 
@@ -33,6 +35,9 @@ int MobilityAgentAdvertiser::configure(Vector<String> &conf, ErrorHandler *errh)
         errh->error("Either home agent or foreign agent option has to be set!");
         return -1;
     }
+
+    if (!lifetimeGiven)
+        _lifetime = 0xffff;
 
     if (intervalGiven)
     {
@@ -99,7 +104,7 @@ void MobilityAgentAdvertiser::sendPacket(IPAddress destinationIP)
     madvh->type = 16;
     madvh->length = 6 + 4 * 1;
     madvh->seq_nr = htons(_sequenceNr);
-    madvh->lifetime = htons(0xffff); // TODO: Set to non-infinite lifetime
+    madvh->lifetime = htons(_lifetime);
     madvh->address = _careOfAddress;
     madvh->flags =  (1 << 7) // Registration required
                   + (0 << 6) // Busy

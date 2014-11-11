@@ -63,7 +63,7 @@ void ProcessAdvertisements::run_timer(Timer* timer){
     {
         _infobase->lifetime--;
 
-        if (_infobase->lifetime <= 5) //TODO get good value for this
+        if (_infobase->lifetime == 3) //TODO get good value for this
         {
             // when registration almost expired, look for advertisement of current foreign agent
             // & relay to element that sends requests
@@ -76,7 +76,7 @@ void ProcessAdvertisements::run_timer(Timer* timer){
         }
         if (_infobase->lifetime == 0) 
         {
-            _infobase->connected = false;
+            //_infobase->connected = false;
             //TODO should something else happen here?
         }
     }

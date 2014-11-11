@@ -25,6 +25,7 @@ class MobilityAgentAdvertiser : public Element {
 	private:
 	    IPAddress _srcIp;
 	    IPAddress _careOfAddress;
+	    uint16_t  _lifetime;
 
 		int _interval;
 		Timer _timer;

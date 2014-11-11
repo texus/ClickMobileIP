@@ -13,7 +13,8 @@ $private_address, $public_address, $default_gateway
                                                        CARE_OF_ADDRESS $public_address,
                                                        INTERVAL 500,
                                                        HOME_AGENT false,
-                                                       FOREIGN_AGENT true)
+                                                       FOREIGN_AGENT true,
+                                                       LIFETIME 60)
 
 	// Shared IP input path and routing table
 	ip :: Strip(14)
