@@ -41,7 +41,7 @@ void RegisterNode::push(int, Packet *p) {
 
     // if non-zero UDP checksum, discard silently
     if(udp_h->uh_sum != 0) {
-        //p->kill(); //TODO kill ok or send to an output(1)?
+        p->kill();
         // remove pending request
         _infobase->pending.erase(most_recent);
         return;
@@ -52,7 +52,7 @@ void RegisterNode::push(int, Packet *p) {
     int id1 = rep_h->id;
     int id2 = most_recent->id;
     if(rep_h->id != most_recent->id) {
-        //TODO kill?
+        p->kill();
         return;
     }
 
@@ -125,6 +125,8 @@ void RegisterNode::push(int, Packet *p) {
             // TODO set home agent address in infobase & retransmit request
         }
     }
+
+    p->kill();
 }
 
 void RegisterNode::run_timer(Timer* timer)

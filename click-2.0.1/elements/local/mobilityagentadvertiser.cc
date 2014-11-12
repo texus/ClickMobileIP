@@ -53,6 +53,7 @@ void MobilityAgentAdvertiser::push(int, Packet* packet)
     click_ether* ethh = (click_ether*)packet->data();
     click_ip* iph = (click_ip*)(ethh + 1);
 
+    packet->kill();
     sendPacket(iph->ip_src);
 }
 

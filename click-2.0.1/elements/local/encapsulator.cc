@@ -61,6 +61,7 @@ void Encapsulator::push(int, Packet* innerPacket) {
 
     packet->set_dst_ip_anno(iph->ip_dst);
 
+    innerPacket->kill();
     output(0).push(packet);
 }
 

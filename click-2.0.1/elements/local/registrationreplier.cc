@@ -118,6 +118,8 @@ void RegistrationReplier::push(int, Packet *p) {
         else
             output(1).push(packet);
     }
+
+    p->kill();
 }
 
 uint8_t RegistrationReplier::check_acceptability(Packet *packet) {

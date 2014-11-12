@@ -38,7 +38,7 @@ void RelayRegistration::push(int, Packet *p) {
 
             // if UDP checksum not 0, discard silently
             if(udp_h->uh_sum != 0) {
-                //TODO kill packet?
+                p->kill();
                 return;
             }
 
@@ -48,6 +48,7 @@ void RelayRegistration::push(int, Packet *p) {
                 // TODO send reply message
                 // Packet *packet = createReply(70);
                 // output(0).push(packet);
+                p->kill();
                 return;
             }
 
@@ -90,7 +91,7 @@ void RelayRegistration::push(int, Packet *p) {
 
             // if UDP checksum not 0, discard silently
             if(udp_h->uh_sum != 0) {
-                //TODO kill packet?
+                p->kill();
                 return;
             }
 
@@ -107,7 +108,7 @@ void RelayRegistration::push(int, Packet *p) {
             }
 
             if(!corresponding_request) {
-                //TODO kill packet?
+                p->kill();
                 return;
             }
 
@@ -148,6 +149,8 @@ void RelayRegistration::push(int, Packet *p) {
             output(0).push(packet);
         }
     }
+
+    p->kill();
 }
 
 void RelayRegistration::run_timer(Timer *timer) {

@@ -62,6 +62,8 @@ void RegistrationRequester::push(int, Packet *p) {
             output(0).push(packet);
         }
     }
+
+    p->kill();
 }
 
 void RegistrationRequester::run_timer(Timer *timer) {

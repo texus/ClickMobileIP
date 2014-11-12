@@ -48,7 +48,7 @@ void ProcessAdvertisements::push(int, Packet* packet)
                     p->value->kill();
                 }
 
-                _infobase->advertisements.insert(advh->address, packet);
+                _infobase->advertisements.insert(advh->address, packet->clone());
 
                 _timers.push_back(Pair<IPAddress, Timer>(advh->address, Timer(this)));
                 _timers.back().second.initialize(this);
