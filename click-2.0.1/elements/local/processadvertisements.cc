@@ -10,7 +10,10 @@ ProcessAdvertisements::ProcessAdvertisements()
 {}
 
 ProcessAdvertisements::~ProcessAdvertisements()
-{}
+{
+    for (HashMap<IPAddress, Packet*>::iterator it = _infobase->advertisements.begin(); it != _infobase->advertisements.end(); ++it)
+        it.pair()->value->kill();
+}
 
 int ProcessAdvertisements::configure(Vector<String> &conf, ErrorHandler *errh) {
 
@@ -48,18 +51,20 @@ void ProcessAdvertisements::push(int, Packet* packet)
                     p->value->kill();
                 }
 
-                _infobase->advertisements.insert(advh->address, packet->clone());
+                // If there is no connection yet then try to connect to this agent
+                if (!_infobase->connected)
+                {
+                    _infobase->advertisements.insert(advh->address, packet->clone());
+
+                    _lastRegistrationAttempt.assign_now();
+                    output(1).push(packet);
+                }
+                else
+                    _infobase->advertisements.insert(advh->address, packet);
 
                 _timers.push_back(Pair<IPAddress, Timer>(advh->address, Timer(this)));
                 _timers.back().second.initialize(this);
                 _timers.back().second.schedule_after_msec(1000);
-
-                // If there is no connection yet then try to connect to this agent
-                if (!_infobase->connected)
-                {
-                    _lastRegistrationAttempt.assign_now();
-                    output(1).push(packet);
-                }
 
                 return;
             }
@@ -107,6 +112,13 @@ void ProcessAdvertisements::run_timer(Timer* timer)
         if ((_infobase->connected) && (_infobase->foreignAgent == address))
             connectedAgentUnavailable = true;
 
+        HashMap<IPAddress, Packet*>::Pair* p = _infobase->advertisements.find_pair(address);
+        if (p == 0)
+        {
+            click_chatter("Advertisement package that is to be removed could not be found.");
+            return;
+        }
+        p->value->kill();
         _infobase->advertisements.erase(address);
 
         for (Vector<Pair<IPAddress, Timer> >::iterator it = _timers.begin(); it != _timers.end(); ++it)
@@ -128,7 +140,7 @@ void ProcessAdvertisements::run_timer(Timer* timer)
 
             // Just connect to the first router advertisement that we still have in the cache
             // TODO: Should we look for the one with the highest lifetime instead?
-            output(1).push(_infobase->advertisements.begin().pair()->value);
+            output(1).push(_infobase->advertisements.begin().pair()->value->clone());
         }
     }
 }

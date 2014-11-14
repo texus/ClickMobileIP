@@ -36,6 +36,7 @@ void RegisterNode::push(int, Packet *p) {
     }
 
     if(!corresponding_found) {
+        p->kill();
         return;
      }
 
