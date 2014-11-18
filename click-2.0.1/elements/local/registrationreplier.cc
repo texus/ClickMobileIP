@@ -15,6 +15,8 @@ RegistrationReplier::~RegistrationReplier() {}
 int RegistrationReplier::configure(Vector<String>& conf, ErrorHandler *errh) {
     if(cp_va_kparse(conf, this, errh, "INFOBASE", cpkP + cpkM, cpElement, &_infobase, cpEnd) < 0)
         return -1;
+
+    return 0;
 }
 
 void RegistrationReplier::push(int, Packet *p) {
