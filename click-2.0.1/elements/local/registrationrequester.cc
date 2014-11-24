@@ -57,7 +57,7 @@ void RegistrationRequester::push(int, Packet *p) {
         // Only sends advertisement if either registration lifetime is ending OR no more advertisements are being
         // received for current COA
         uint32_t adv_co_addr = adv_mobileh->address;
-        Packet *packet = createRequest(adv_src_addr, adv_mobileh->lifetime, adv_co_addr);
+        Packet *packet = createRequest(adv_src_addr, ntohs(adv_mobileh->lifetime), adv_co_addr);
         if(packet != 0) {
             output(0).push(packet);
         }
@@ -86,12 +86,17 @@ void RegistrationRequester::run_timer(Timer *timer) {
 }
 
 Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, uint32_t co_addr) {
+
+    // Provide a nonce for the identification
+    uint64_t id;
+    *((uint32_t*)&id) = Timestamp::now().subsec();
+    *(((uint32_t*)&id)+1) = Timestamp::now_steady().subsec();
+
     // save new request to pending requests
     pending_request new_req;
     //TODO save link layer address for foreign agent?
     new_req.ip_dst = ip_dst;
     new_req.co_addr = co_addr;
-    uint64_t id = 0; //TODO correct value for id?
     new_req.id = id;
     new_req.requested_lifetime = lifetime;
     new_req.remaining_lifetime = lifetime;
@@ -143,11 +148,14 @@ Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, 
                     + (0 << 2)  // r, always sent as 0
                     + (0 << 1)  // Reverse tunnelling //TODO check if supported?
                     + (0);      // x, always sent as 0
-    req_head->lifetime = lifetime; //TODO If not specified in advertisement, use (ADJUSTABLE) default ICMP Router Advertisement lifetime
+    req_head->lifetime = htons(lifetime); //TODO If not specified in advertisement, use (ADJUSTABLE) default ICMP Router Advertisement lifetime
     req_head->home_addr = _infobase->homeAddress.addr();
     req_head->home_agent = _infobase->homeAgent.addr();
     req_head->co_addr = co_addr;
     req_head->id = id;
+
+    // Calculate the udp checksum
+    udp_head->uh_sum = click_in_cksum_pseudohdr(click_in_cksum((unsigned char*)udp_head, packet_size - sizeof(click_ip)), ip_head, packet_size - sizeof(click_ip));
 
     return packet;
 }

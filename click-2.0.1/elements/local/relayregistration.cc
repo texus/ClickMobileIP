@@ -36,8 +36,9 @@ void RelayRegistration::push(int, Packet *p) {
             // check if home address does not belong to network interface of foreign agent //TODO
             // if acting as home agent, send packet to home agent else reject with code 136 //TODO
 
-            // if UDP checksum not 0, discard silently
-            if(udp_h->uh_sum != 0) {
+            // If the UDP checksum is wrong then discard the packet silently.
+            // The checksum is still part of the packet, which is why we check for not null, instead of checking whether what we calculate equals the checksum.
+            if(click_in_cksum_pseudohdr(click_in_cksum((unsigned char*)udp_h, packet_size - sizeof(click_ip)), ip_h, packet_size - sizeof(click_ip)) != 0) {
                 p->kill();
                 return;
             }
