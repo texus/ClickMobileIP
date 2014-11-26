@@ -25,7 +25,6 @@ class MobilityAgentAdvertiser : public Element {
     private:
         IPAddress _srcIp;
         IPAddress _careOfAddress;
-        uint16_t  _lifetime;
 
         int _interval;
         Timer _timer;
@@ -34,6 +33,27 @@ class MobilityAgentAdvertiser : public Element {
 
         bool _homeAgent;
         bool _foreignAgent;
+
+        // The maximum time allowed between sending multicast Router Advertisements from the interface, in seconds.
+        // Must be no less than 4 seconds and no greater than 1800 seconds.
+        // Default: 600 seconds
+        unsigned _maxAdvertisementInterval;
+
+        // The minimum time allowed between sending unsolicited multicast Router Advertisements from the interface, in seconds.
+        // Must be no less than 3 seconds and no greater than MaxAdvertisementInterval.
+        // Default: 0.75 * MaxAdvertisementInterval
+        unsigned _minAdvertisementInterval;
+
+        // The value to be placed in the Lifetime field of Router Advertisements sent from the interface, in seconds.
+        // Must be no less than MaxAdvertisementInterval and no greater than 9000 seconds.
+        // Default: 3 * MaxAdvertisementInterval
+        unsigned _advertisementLifetime;
+
+        // The longest lifetime (measured in seconds) that this agent is willing to accept in any Registration Request.
+        // A value of 0xffff indicates infinity. This field has no relation to the "Lifetime" field within the
+        // ICMP Router Advertisement portion of the Agent Advertisement.
+        // Set to 0xffff in this code when not specified.
+        uint16_t _registrationLifetime;
 };
 
 struct advertisement_header {

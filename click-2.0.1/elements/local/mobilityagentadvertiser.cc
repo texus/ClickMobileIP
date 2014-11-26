@@ -18,15 +18,20 @@ MobilityAgentAdvertiser::~MobilityAgentAdvertiser()
 
 int MobilityAgentAdvertiser::configure(Vector<String> &conf, ErrorHandler *errh) {
 
-    bool intervalGiven;
-    bool lifetimeGiven;
+    bool maxAdvertisementIntervalGiven;
+    bool minAdvertisementIntervalGiven;
+    bool advertisementLifetimeGiven;
+    bool registrationLifetimeGiven;
+
     if (cp_va_kparse(conf, this, errh,
                      "SRC_IP", cpkM, cpIPAddress, &_srcIp,
                      "CARE_OF_ADDRESS", cpkM, cpIPAddress, &_careOfAddress,
                      "HOME_AGENT", cpkM, cpBool, &_homeAgent,
                      "FOREIGN_AGENT", cpkM, cpBool, &_foreignAgent,
-                     "INTERVAL", cpkC, &intervalGiven, cpUnsigned, &_interval,
-                     "LIFETIME", cpkC, &lifetimeGiven, cpUnsigned, &_lifetime,
+                     "MaxAdvertisementInterval", cpkC, &maxAdvertisementIntervalGiven, cpUnsigned, &_maxAdvertisementInterval,
+                     "MinAdvertisementInterval", cpkC, &minAdvertisementIntervalGiven, cpUnsigned, &_minAdvertisementInterval,
+                     "AdvertisementLifetime", cpkC, &advertisementLifetimeGiven, cpUnsigned, &_advertisementLifetime,
+                     "RegistrationLifetime", cpkC, &registrationLifetimeGiven, cpUnsigned, &_registrationLifetime,
                      cpEnd) < 0)
         return -1;
 
@@ -36,14 +41,39 @@ int MobilityAgentAdvertiser::configure(Vector<String> &conf, ErrorHandler *errh)
         return -1;
     }
 
-    if (!lifetimeGiven)
-        _lifetime = 0xffff;
+    if (!maxAdvertisementIntervalGiven)
+        _maxAdvertisementInterval = 600;
+    if (!minAdvertisementIntervalGiven)
+        _minAdvertisementInterval = (unsigned)(0.75 * _maxAdvertisementInterval);
+    if (!advertisementLifetimeGiven)
+        _advertisementLifetime = 3 * _maxAdvertisementInterval;
+    if (!registrationLifetimeGiven)
+        _registrationLifetime = 0xffff;
 
-    if (intervalGiven)
+    if (_maxAdvertisementInterval < 4 || _maxAdvertisementInterval > 1800)
     {
-        _timer.initialize(this);
-        _timer.schedule_after_msec(_interval);
+        errh->error("MaxAdvertisementInterval must be no less than 4 seconds and no greater than 1800.");
+        return -1;
     }
+    if (_minAdvertisementInterval < 3 || _minAdvertisementInterval > _maxAdvertisementInterval)
+    {
+        errh->error("MinAdvertisementInterval must be no less than 3 seconds and no greater than MaxAdvertisementInterval.");
+        return -1;
+    }
+    if (_advertisementLifetime < _maxAdvertisementInterval || _advertisementLifetime > 9000)
+    {
+        errh->error("AdvertisementLifetime must be no less than MaxAdvertisementInterval and no greater than 9000 seconds.");
+        return -1;
+    }
+    if (_maxAdvertisementInterval * 3 > _advertisementLifetime)
+    {
+        errh->error("The interval at which Agent Advertisements are sent SHOULD be no longer than 1/3 of the advertisement Lifetime.");
+        return -1;
+    }
+
+    // Send an advertisement immediately after the router starts
+    _timer.initialize(this);
+    _timer.schedule_after_msec(0);
 
     return 0;
 }
@@ -53,16 +83,19 @@ void MobilityAgentAdvertiser::push(int, Packet* packet)
     click_ether* ethh = (click_ether*)packet->data();
     click_ip* iph = (click_ip*)(ethh + 1);
 
-    packet->kill();
     sendPacket(iph->ip_src);
+    packet->kill();
 }
 
 void MobilityAgentAdvertiser::run_timer(Timer *)
 {
     sendPacket(IPAddress::make_broadcast());
 
-    int rnd = (rand() % 200) - 100;
-    _timer.schedule_after_msec(_interval + rnd);
+    // Schedule the next advertisement
+    if (_maxAdvertisementInterval > _minAdvertisementInterval)
+        _timer.schedule_after_msec((rand() % ((_maxAdvertisementInterval - _minAdvertisementInterval) * 1000)) + _minAdvertisementInterval * 1000);
+    else // minimum = maximum
+        _timer.schedule_after_sec(_minAdvertisementInterval + ((rand() % 100) - 50));
 }
 
 void MobilityAgentAdvertiser::sendPacket(IPAddress destinationIP)
@@ -95,17 +128,17 @@ void MobilityAgentAdvertiser::sendPacket(IPAddress destinationIP)
     advertisement_header* advh = (advertisement_header*)(iph + 1);
     advh->type = 9; // Router Advertisement
     advh->code = 0; // Also handles normal routing
-    advh->addresses = 1;
-    advh->addr_size = 2;
-    advh->lifetime = htons(2); // TODO: Allow changing lifetime
-    advh->address = _srcIp;
-    advh->addrPreference = 0;
+    advh->addresses = 1; // Only send one IP address
+    advh->addr_size = 2; // Router Address + Preference Level
+    advh->lifetime = htons(_advertisementLifetime);
+    advh->address = _srcIp; // We only send 1 ip address (our private ip address)
+    advh->addrPreference = 0; // Only one ip address, thus preference doesn't really matter
 
     mobile_advertisement_header* madvh = (mobile_advertisement_header*)(advh + 1);
     madvh->type = 16;
-    madvh->length = 6 + 4 * 1;
+    madvh->length = 6 + 4 * 1; // 6 bytes + 4 bytes for every ip address
     madvh->seq_nr = htons(_sequenceNr);
-    madvh->lifetime = htons(_lifetime);
+    madvh->lifetime = htons(_registrationLifetime);
     madvh->address = _careOfAddress;
     madvh->flags =  (1 << 7) // Registration required
                   + (0 << 6) // Busy

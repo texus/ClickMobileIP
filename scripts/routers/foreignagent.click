@@ -11,10 +11,12 @@ $private_address, $public_address, $default_gateway
 
     mobilityAgentAdvertiser :: MobilityAgentAdvertiser(SRC_IP $private_address,
                                                        CARE_OF_ADDRESS $public_address,
-                                                       INTERVAL 500,
                                                        HOME_AGENT false,
                                                        FOREIGN_AGENT true,
-                                                       LIFETIME 60)
+                                                       MaxAdvertisementInterval 4,
+                                                       MinAdvertisementInterval 3,
+                                                       AdvertisementLifetime 12,
+                                                       RegistrationLifetime 100)
 
     // Shared IP input path and routing table
     ip :: Strip(14)
