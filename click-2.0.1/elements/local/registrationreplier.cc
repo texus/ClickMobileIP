@@ -93,7 +93,6 @@ void RegistrationReplier::push(int, Packet *p) {
         udp_head->uh_dport = req_udp->uh_sport; // copied from source port of corresponding Registration Request
         uint16_t len = packet->length() - sizeof(click_ip);
         udp_head->uh_ulen = htons(len);
-        udp_head->uh_sum = 0; //TODO non-zero UDP checksum?
 
         // add mobile IP fields
         registration_reply_header *rep_head = (registration_reply_header*)(udp_head + 1);
@@ -111,8 +110,8 @@ void RegistrationReplier::push(int, Packet *p) {
             rep_head->home_agent = req_rh->home_agent;
         //}
 
-        //uint64_t* rep_id = (uint64_t*)(rep_head + 1);
-        //*rep_id = req_rh->id;
+        // Calculate the udp checksum
+        udp_head->uh_sum = click_in_cksum_pseudohdr(click_in_cksum((unsigned char*)udp_head, packet_size - sizeof(click_ip)), ip_head, packet_size - sizeof(click_ip));
 
         // send reply either to eth0 or to eth1
         if (req_rh->home_addr == req_rh->co_addr)

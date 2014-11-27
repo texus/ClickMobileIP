@@ -40,8 +40,11 @@ void RegisterNode::push(int, Packet *p) {
         return;
      }
 
-    // if non-zero UDP checksum, discard silently
-    if(udp_h->uh_sum != 0) {
+    // If the UDP checksum is wrong then discard the packet silently.
+    // The checksum is still part of the packet, which is why we check for not null, instead of checking whether what we calculate equals the checksum.
+    if ((click_in_cksum_pseudohdr(click_in_cksum((unsigned char*)udp_h, p->length() - sizeof(click_ip)), ip_h, p->length() - sizeof(click_ip)) != 0) 
+     && (ntohs(udp_h->uh_sum) != 0))
+    {
         p->kill();
         // remove pending request
         _infobase->pending.erase(most_recent);

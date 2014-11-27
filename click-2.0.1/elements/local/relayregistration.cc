@@ -38,7 +38,9 @@ void RelayRegistration::push(int, Packet *p) {
 
             // If the UDP checksum is wrong then discard the packet silently.
             // The checksum is still part of the packet, which is why we check for not null, instead of checking whether what we calculate equals the checksum.
-            if(click_in_cksum_pseudohdr(click_in_cksum((unsigned char*)udp_h, packet_size - sizeof(click_ip)), ip_h, packet_size - sizeof(click_ip)) != 0) {
+            if ((click_in_cksum_pseudohdr(click_in_cksum((unsigned char*)udp_h, packet_size - sizeof(click_ip)), ip_h, packet_size - sizeof(click_ip)) != 0) 
+             && (ntohs(udp_h->uh_sum) != 0))
+            {
                 p->kill();
                 return;
             }
@@ -58,7 +60,7 @@ void RelayRegistration::push(int, Packet *p) {
             // link-layer source address of mobile node //TODO
             entry.ip_src = ip_h->ip_src; // mobile node Home Address
             entry.ip_dst = ip_h->ip_dst;
-            entry.udp_src = udp_h->uh_sport;
+            entry.udp_src = ntohs(udp_h->uh_sport);
             entry.home_agent = IPAddress(req_h->home_agent);
             entry.id = req_h->id;
             entry.requested_lifetime = ntohs(req_h->lifetime);
@@ -81,7 +83,8 @@ void RelayRegistration::push(int, Packet *p) {
             uint16_t udp_src_prt = ntohs(udp_h->uh_sport);
             udp_head->uh_sport = htons(434);
             udp_head->uh_dport = htons(udp_src_prt);
-            udp_head->uh_sum = 0;
+            udp_head->uh_sum = htons(0);
+            udp_head->uh_sum = click_in_cksum_pseudohdr(click_in_cksum((unsigned char*)udp_head, packet_size - sizeof(click_ip)), ip_head, packet_size - sizeof(click_ip));
             output(1).push(packet);
         }
     }
@@ -90,8 +93,11 @@ void RelayRegistration::push(int, Packet *p) {
         registration_reply_header *rep_h = (registration_reply_header*)(udp_h + 1);
         if(rep_h->type == 3) {
 
-            // if UDP checksum not 0, discard silently
-            if(udp_h->uh_sum != 0) {
+            // If the UDP checksum is wrong then discard the packet silently.
+            // The checksum is still part of the packet, which is why we check for not null, instead of checking whether what we calculate equals the checksum.
+            if ((click_in_cksum_pseudohdr(click_in_cksum((unsigned char*)udp_h, packet_size - sizeof(click_ip)), ip_h, packet_size - sizeof(click_ip)) != 0) 
+             && (ntohs(udp_h->uh_sum) != 0))
+            {
                 p->kill();
                 return;
             }
@@ -145,6 +151,9 @@ void RelayRegistration::push(int, Packet *p) {
             uint16_t udp_src_prt = ntohs(udp_h->uh_sport);
             udp_head->uh_sport = htons(434);
             udp_head->uh_dport = htons(udp_src_prt);
+
+            udp_head->uh_sum = htons(0);
+            udp_head->uh_sum = click_in_cksum_pseudohdr(click_in_cksum((unsigned char*)udp_head, packet_size - sizeof(click_ip)), ip_head, packet_size - sizeof(click_ip));
 
             // relay to mobile node
             output(0).push(packet);

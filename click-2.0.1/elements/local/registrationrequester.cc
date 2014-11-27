@@ -133,9 +133,7 @@ Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, 
     click_udp *udp_head = (click_udp*)(ip_head + 1);
     udp_head->uh_sport = htons(6789); //TODO From which port are requests sent?
     udp_head->uh_dport = htons(434); // Destination port for registration requests is 434
-    uint16_t len = packet->length() - sizeof(click_ip);
-    udp_head->uh_ulen = htons(len);
-    udp_head->uh_sum = 0;
+    udp_head->uh_ulen = htons(packet->length() - sizeof(click_ip));
 
     // add Mobile IP fields
     registration_request_header *req_head = (registration_request_header*)(udp_head+1);
