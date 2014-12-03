@@ -16,6 +16,18 @@ class MobilityAgentAdvertiser : public Element {
 
         int configure(Vector<String>&, ErrorHandler*);
 
+        static String readMaxAdvertisementInterval(Element* e, void* thunk);
+        static String readMinAdvertisementInterval(Element* e, void* thunk);
+        static String readAdvertisementLifetime(Element* e, void* thunk);
+        static String readRegistrationLifetime(Element* e, void* thunk);
+
+        static int writeMaxAdvertisementInterval(const String& conf, Element* e, void* thunk, ErrorHandler* errh);
+        static int writeMinAdvertisementInterval(const String& conf, Element* e, void* thunk, ErrorHandler* errh);
+        static int writeAdvertisementLifetime(const String& conf, Element* e, void* thunk, ErrorHandler* errh);
+        static int writeRegistrationLifetime(const String& conf, Element* e, void* thunk, ErrorHandler* errh);
+
+        void add_handlers();
+
         void push(int, Packet*);
         void run_timer(Timer *);
 

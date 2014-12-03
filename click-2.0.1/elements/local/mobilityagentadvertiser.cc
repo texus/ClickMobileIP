@@ -78,6 +78,75 @@ int MobilityAgentAdvertiser::configure(Vector<String> &conf, ErrorHandler *errh)
     return 0;
 }
 
+String MobilityAgentAdvertiser::readMaxAdvertisementInterval(Element* e, void* thunk)
+{
+    MobilityAgentAdvertiser* me = (MobilityAgentAdvertiser*)e;
+    return String(me->_maxAdvertisementInterval);
+}
+
+String MobilityAgentAdvertiser::readMinAdvertisementInterval(Element* e, void* thunk)
+{
+    MobilityAgentAdvertiser* me = (MobilityAgentAdvertiser*)e;
+    return String(me->_minAdvertisementInterval);
+}
+
+String MobilityAgentAdvertiser::readAdvertisementLifetime(Element* e, void* thunk)
+{
+    MobilityAgentAdvertiser* me = (MobilityAgentAdvertiser*)e;
+    return String(me->_advertisementLifetime);
+}
+
+String MobilityAgentAdvertiser::readRegistrationLifetime(Element* e, void* thunk)
+{
+    MobilityAgentAdvertiser* me = (MobilityAgentAdvertiser*)e;
+    return String(me->_registrationLifetime);
+}
+
+int MobilityAgentAdvertiser::writeMaxAdvertisementInterval(const String& conf, Element* e, void* thunk, ErrorHandler* errh)
+{
+    MobilityAgentAdvertiser* me = (MobilityAgentAdvertiser*)e;
+    if(cp_va_kparse(conf, me, errh, "MaxAdvertisementInterval", cpkM + cpkP, cpUnsigned, &me->_maxAdvertisementInterval, cpEnd) < 0)
+        return -1;
+    return 0;
+}
+
+int MobilityAgentAdvertiser::writeMinAdvertisementInterval(const String& conf, Element* e, void* thunk, ErrorHandler* errh)
+{
+    MobilityAgentAdvertiser* me = (MobilityAgentAdvertiser*)e;
+    if(cp_va_kparse(conf, me, errh, "MinAdvertisementInterval", cpkM + cpkP, cpUnsigned, &me->_minAdvertisementInterval, cpEnd) < 0)
+        return -1;
+    return 0;
+}
+
+int MobilityAgentAdvertiser::writeAdvertisementLifetime(const String& conf, Element* e, void* thunk, ErrorHandler* errh)
+{
+    MobilityAgentAdvertiser* me = (MobilityAgentAdvertiser*)e;
+    if(cp_va_kparse(conf, me, errh, "AdvertisementLifetime", cpkM + cpkP, cpUnsigned, &me->_advertisementLifetime, cpEnd) < 0)
+        return -1;
+    return 0;
+}
+
+int MobilityAgentAdvertiser::writeRegistrationLifetime(const String& conf, Element* e, void* thunk, ErrorHandler* errh)
+{
+    MobilityAgentAdvertiser* me = (MobilityAgentAdvertiser*)e;
+    if(cp_va_kparse(conf, me, errh, "RegistrationLifetime", cpkM + cpkP, cpUnsigned, &me->_registrationLifetime, cpEnd) < 0)
+        return -1;
+    return 0;
+}
+
+void MobilityAgentAdvertiser::add_handlers()
+{
+    add_read_handler("MaxAdvertisementInterval", &readMaxAdvertisementInterval, (void*)0);
+    add_read_handler("MinAdvertisementInterval", &readMinAdvertisementInterval, (void*)0);
+    add_read_handler("AdvertisementLifetime", &readAdvertisementLifetime, (void*)0);
+    add_read_handler("RegistrationLifetime", &readRegistrationLifetime, (void*)0);
+
+    add_write_handler("MaxAdvertisementInterval", &writeMaxAdvertisementInterval, (void*)0);
+    add_write_handler("MinAdvertisementInterval", &writeMinAdvertisementInterval, (void*)0);
+    add_write_handler("AdvertisementLifetime", &writeAdvertisementLifetime, (void*)0);
+    add_write_handler("RegistrationLifetime", &writeRegistrationLifetime, (void*)0);
+}
+
 void MobilityAgentAdvertiser::push(int, Packet* packet)
 {
     click_ether* ethh = (click_ether*)packet->data();
@@ -95,7 +164,7 @@ void MobilityAgentAdvertiser::run_timer(Timer *)
     if (_maxAdvertisementInterval > _minAdvertisementInterval)
         _timer.schedule_after_msec((rand() % ((_maxAdvertisementInterval - _minAdvertisementInterval) * 1000)) + _minAdvertisementInterval * 1000);
     else // minimum = maximum
-        _timer.schedule_after_sec(_minAdvertisementInterval + ((rand() % 100) - 50));
+        _timer.schedule_after_msec((_minAdvertisementInterval * 1000) + ((rand() % 100) - 50));
 }
 
 void MobilityAgentAdvertiser::sendPacket(IPAddress destinationIP)
