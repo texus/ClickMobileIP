@@ -20,11 +20,13 @@ class MobilityAgentAdvertiser : public Element {
         static String readMinAdvertisementInterval(Element* e, void* thunk);
         static String readAdvertisementLifetime(Element* e, void* thunk);
         static String readRegistrationLifetime(Element* e, void* thunk);
+        static String readBusy(Element* e, void* thunk);
 
         static int writeMaxAdvertisementInterval(const String& conf, Element* e, void* thunk, ErrorHandler* errh);
         static int writeMinAdvertisementInterval(const String& conf, Element* e, void* thunk, ErrorHandler* errh);
         static int writeAdvertisementLifetime(const String& conf, Element* e, void* thunk, ErrorHandler* errh);
         static int writeRegistrationLifetime(const String& conf, Element* e, void* thunk, ErrorHandler* errh);
+        static int writeBusy(const String& conf, Element* e, void* thunk, ErrorHandler* errh);
 
         void add_handlers();
 
@@ -45,6 +47,7 @@ class MobilityAgentAdvertiser : public Element {
 
         bool _homeAgent;
         bool _foreignAgent;
+        bool _busy;
 
         // The maximum time allowed between sending multicast Router Advertisements from the interface, in seconds.
         // Must be no less than 4 seconds and no greater than 1800 seconds.

@@ -22,6 +22,7 @@ int MobilityAgentAdvertiser::configure(Vector<String> &conf, ErrorHandler *errh)
     bool minAdvertisementIntervalGiven;
     bool advertisementLifetimeGiven;
     bool registrationLifetimeGiven;
+    bool busyGiven;
 
     if (cp_va_kparse(conf, this, errh,
                      "SRC_IP", cpkM, cpIPAddress, &_srcIp,
@@ -32,6 +33,7 @@ int MobilityAgentAdvertiser::configure(Vector<String> &conf, ErrorHandler *errh)
                      "MinAdvertisementInterval", cpkC, &minAdvertisementIntervalGiven, cpUnsigned, &_minAdvertisementInterval,
                      "AdvertisementLifetime", cpkC, &advertisementLifetimeGiven, cpUnsigned, &_advertisementLifetime,
                      "RegistrationLifetime", cpkC, &registrationLifetimeGiven, cpUnsigned, &_registrationLifetime,
+                     "Busy", cpkC, &busyGiven, cpBool, &_busy,
                      cpEnd) < 0)
         return -1;
 
@@ -71,6 +73,9 @@ int MobilityAgentAdvertiser::configure(Vector<String> &conf, ErrorHandler *errh)
         return -1;
     }
 
+    if (!busyGiven)
+        _busy = false;
+
     // Send an advertisement immediately after the router starts
     _timer.initialize(this);
     _timer.schedule_after_msec(0);
@@ -100,6 +105,12 @@ String MobilityAgentAdvertiser::readRegistrationLifetime(Element* e, void* thunk
 {
     MobilityAgentAdvertiser* me = (MobilityAgentAdvertiser*)e;
     return String(me->_registrationLifetime);
+}
+
+String MobilityAgentAdvertiser::readBusy(Element* e, void* thunk)
+{
+    MobilityAgentAdvertiser* me = (MobilityAgentAdvertiser*)e;
+    return String(me->_busy);
 }
 
 int MobilityAgentAdvertiser::writeMaxAdvertisementInterval(const String& conf, Element* e, void* thunk, ErrorHandler* errh)
@@ -134,17 +145,27 @@ int MobilityAgentAdvertiser::writeRegistrationLifetime(const String& conf, Eleme
     return 0;
 }
 
+int MobilityAgentAdvertiser::writeBusy(const String& conf, Element* e, void* thunk, ErrorHandler* errh)
+{
+    MobilityAgentAdvertiser* me = (MobilityAgentAdvertiser*)e;
+    if(cp_va_kparse(conf, me, errh, "Busy", cpkM + cpkP, cpBool, &me->_busy, cpEnd) < 0)
+        return -1;
+    return 0;
+}
+
 void MobilityAgentAdvertiser::add_handlers()
 {
     add_read_handler("MaxAdvertisementInterval", &readMaxAdvertisementInterval, (void*)0);
     add_read_handler("MinAdvertisementInterval", &readMinAdvertisementInterval, (void*)0);
     add_read_handler("AdvertisementLifetime", &readAdvertisementLifetime, (void*)0);
     add_read_handler("RegistrationLifetime", &readRegistrationLifetime, (void*)0);
+    add_read_handler("Busy", &readBusy, (void*)0);
 
     add_write_handler("MaxAdvertisementInterval", &writeMaxAdvertisementInterval, (void*)0);
     add_write_handler("MinAdvertisementInterval", &writeMinAdvertisementInterval, (void*)0);
     add_write_handler("AdvertisementLifetime", &writeAdvertisementLifetime, (void*)0);
     add_write_handler("RegistrationLifetime", &writeRegistrationLifetime, (void*)0);
+    add_write_handler("Busy", &writeBusy, (void*)0);
 }
 
 void MobilityAgentAdvertiser::push(int, Packet* packet)
@@ -209,14 +230,14 @@ void MobilityAgentAdvertiser::sendPacket(IPAddress destinationIP)
     madvh->seq_nr = htons(_sequenceNr);
     madvh->lifetime = htons(_registrationLifetime);
     madvh->address = _careOfAddress;
-    madvh->flags =  (1 << 7) // Registration required
-                  + (0 << 6) // Busy
+    madvh->flags =  (0 << 7) // Registration required (1 is to force registration when using co-located care-of address, only set on foreign agent)
+                  + (_busy << 6) // Busy
                   + (_homeAgent << 5) // Home agent
                   + (_foreignAgent << 4) // Foreign agent
-                  + (0 << 3) // Minimal encapsulation  ///TODO: Check correct value
-                  + (0 << 2) // GRE encapsulation  ///TODO: Check correct value
-                  + (0 << 1) // ignore
-                  + 0;       // Foreign agent supports reverse tunneling  ///TODO: Check correct value
+                  + (0 << 3) // Minimal encapsulation (not supported, rfc 2004)
+                  + (0 << 2) // GRE encapsulation (not supported, rfc 2784)
+                  + (0 << 1) // reserved
+                  + 0;       // Reverse tunneling (not supported, rfc 3024)
 
     // Calculate the ICMP header checksum
     advh->checksum = click_in_cksum((unsigned char*)advh, packetsize - sizeof(click_ip));
