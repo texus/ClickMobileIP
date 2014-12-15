@@ -37,12 +37,6 @@ int MobilityAgentAdvertiser::configure(Vector<String> &conf, ErrorHandler *errh)
                      cpEnd) < 0)
         return -1;
 
-    if (!_homeAgent && !_foreignAgent)
-    {
-        errh->error("Either home agent or foreign agent option has to be set!");
-        return -1;
-    }
-
     if (!maxAdvertisementIntervalGiven)
         _maxAdvertisementInterval = 600;
     if (!minAdvertisementIntervalGiven)
@@ -51,7 +45,14 @@ int MobilityAgentAdvertiser::configure(Vector<String> &conf, ErrorHandler *errh)
         _advertisementLifetime = 3 * _maxAdvertisementInterval;
     if (!registrationLifetimeGiven)
         _registrationLifetime = 0xffff;
+    if (!busyGiven)
+        _busy = false;
 
+    if (!_homeAgent && !_foreignAgent)
+    {
+        errh->error("Either home agent or foreign agent option has to be set!");
+        return -1;
+    }
     if (_maxAdvertisementInterval < 4 || _maxAdvertisementInterval > 1800)
     {
         errh->error("MaxAdvertisementInterval must be no less than 4 seconds and no greater than 1800.");
@@ -72,9 +73,11 @@ int MobilityAgentAdvertiser::configure(Vector<String> &conf, ErrorHandler *errh)
         errh->error("The interval at which Agent Advertisements are sent SHOULD be no longer than 1/3 of the advertisement Lifetime.");
         return -1;
     }
-
-    if (!busyGiven)
-        _busy = false;
+    if (_busy && !_foreignAgent)
+    {
+        errh->error("Only foreign agents can set the busy bit!");
+        return -1;
+    }
 
     // Send an advertisement immediately after the router starts
     _timer.initialize(this);
