@@ -49,22 +49,27 @@ void ProcessAdvertisements::push(int, Packet* packet)
                     }
 
                     p->value->kill();
+                    _infobase->advertisements.erase(advh->address);
                 }
 
-                // If there is no connection yet then try to connect to this agent
-                if (!_infobase->connected)
+                // Ignore the message when the busy bit was set
+                if (((madvh->flags >> 6) & 1) == 0)
                 {
-                    _infobase->advertisements.insert(advh->address, packet->clone());
+                    // If there is no connection yet then try to connect to this agent
+                    if (!_infobase->connected)
+                    {
+                        _infobase->advertisements.insert(advh->address, packet->clone());
 
-                    _lastRegistrationAttempt.assign_now();
-                    output(1).push(packet);
+                        _lastRegistrationAttempt.assign_now();
+                        output(1).push(packet);
+                    }
+                    else
+                        _infobase->advertisements.insert(advh->address, packet);
+
+                    _timers.push_back(Pair<IPAddress, Timer>(advh->address, Timer(this)));
+                    _timers.back().second.initialize(this);
+                    _timers.back().second.schedule_after_msec(1000);
                 }
-                else
-                    _infobase->advertisements.insert(advh->address, packet);
-
-                _timers.push_back(Pair<IPAddress, Timer>(advh->address, Timer(this)));
-                _timers.back().second.initialize(this);
-                _timers.back().second.schedule_after_msec(1000);
 
                 return;
             }

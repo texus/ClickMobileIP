@@ -16,7 +16,8 @@ $private_address, $public_address, $default_gateway
                                                        MaxAdvertisementInterval 4,
                                                        MinAdvertisementInterval 3,
                                                        AdvertisementLifetime 12,
-                                                       RegistrationLifetime 100)
+                                                       RegistrationLifetime 100,
+                                                       Busy false)
 
     // Shared IP input path and routing table
     ip :: Strip(14)
