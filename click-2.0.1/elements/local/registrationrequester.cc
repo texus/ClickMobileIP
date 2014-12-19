@@ -27,8 +27,6 @@ int RegistrationRequester::configure(Vector<String>& conf, ErrorHandler *errh) {
 
 void RegistrationRequester::push(int, Packet *p) {
 
-    // It is assumed that all incoming packets are advertisments //TODO other methods of discovering FA's
-
     // Get relevant advertisement headers
     click_ip *adv_iph = (click_ip*)p->data();
     advertisement_header *adv_advh = (advertisement_header*)(adv_iph + 1);
@@ -77,7 +75,7 @@ void RegistrationRequester::run_timer(Timer *timer) {
             it->remaining_lifetime = htons(lifetime);
         }
         else {
-            // remove pending requests whose lifetime has expired
+            // remove pending requests whose lifetime has expired //TODO
         }
         // when no reply has been received within reasonable time, another registration request MAY be transmitted! //TODO
     }
@@ -100,6 +98,7 @@ Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, 
     new_req.id = id;
     new_req.requested_lifetime = lifetime;
     new_req.remaining_lifetime = lifetime;
+    new_req.src_port = rand() % (65535 - 49152) + 49152;
     _infobase->pending.push_back(new_req);
 
     // make the packet
@@ -120,7 +119,7 @@ Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, 
     ip_head->ip_hl = 5;
     ip_head->ip_tos = 0; // Best-Effort
     ip_head->ip_len = htons(packet_size);
-    //TODO ip-id necessary?
+    //TODO ip-id necessary? Waarschijnlijk niet
     ip_head->ip_ttl = 64; //TODO set to 1 if broadcasting request to all mobile agents
     ip_head->ip_p = 17; // UDP protocol
     ip_head->ip_src = _infobase->homeAddress; // mobile node home address is assumed to be known in this project
@@ -131,19 +130,19 @@ Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, 
 
     // add the UDP header
     click_udp *udp_head = (click_udp*)(ip_head + 1);
-    udp_head->uh_sport = htons(6789); //TODO From which port are requests sent?
+    udp_head->uh_sport = htons(new_req.src_port); // Send from random source port
     udp_head->uh_dport = htons(434); // Destination port for registration requests is 434
     udp_head->uh_ulen = htons(packet->length() - sizeof(click_ip));
 
     // add Mobile IP fields
     registration_request_header *req_head = (registration_request_header*)(udp_head+1);
     req_head->type = 1; // Registration Request
-    req_head->flags = (0 << 7)      // Simultaneous bindings: not supported in this project
+    req_head->flags = (0 << 7)  // Simultaneous bindings: not supported in this project //TODO Moet dit wel kunnen vragen, maar HA moet op correcte manier weigeren
                     + (0 << 6)  // Broadcast datagrams //TODO check when to turn on
                     + (0 << 5)  // Decapsulation by mobile node: only when registering co-located COA (not supported)
                     + (0 << 4)  // Minimal encapsulation //TODO check when to turn on.
                     + (0 << 3)  // GRE encapsulation //TODO check when to turn on
-                    + (0 << 2)  // r, always sent as 0
+                    + (0 << 2)  // r (reserved), always sent as 0
                     + (0 << 1)  // Reverse tunnelling //TODO check if supported?
                     + (0);      // x, always sent as 0
     req_head->lifetime = htons(lifetime); //TODO If not specified in advertisement, use (ADJUSTABLE) default ICMP Router Advertisement lifetime

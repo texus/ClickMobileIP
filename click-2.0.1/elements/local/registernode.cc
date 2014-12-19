@@ -28,7 +28,7 @@ void RegisterNode::push(int, Packet *p) {
     Vector<pending_request>::iterator most_recent;
     bool corresponding_found = false;
     for(Vector<pending_request>::iterator it = _infobase->pending.begin();it != _infobase->pending.end(); ++it) {
-        if(it->ip_dst == ip_h->ip_src) {
+        if(it->ip_dst == ip_h->ip_src && it->src_port == ntohs(udp_h->uh_dport)) {
             corresponding_found = true;
             most_recent = it;
             break;

@@ -89,7 +89,7 @@ void RegistrationReplier::push(int, Packet *p) {
 
         // add UDP header
         click_udp *udp_head = (click_udp*)(ip_head + 1);
-        udp_head->uh_sport = req_udp->uh_dport; // copied form dst port of corresponding Registration Request
+        udp_head->uh_sport = req_udp->uh_dport; // copied form dst port of corresponding Registration Request //TODO variable instead of 434?
         udp_head->uh_dport = req_udp->uh_sport; // copied from source port of corresponding Registration Request
         uint16_t len = packet->length() - sizeof(click_ip);
         udp_head->uh_ulen = htons(len);

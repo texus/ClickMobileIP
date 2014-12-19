@@ -17,6 +17,8 @@ struct pending_request {
     uint16_t requested_lifetime;
     // remaining lifetime
     uint16_t remaining_lifetime;
+    // source port on which mobile node is listening
+    uint16_t src_port;
 };
 
 class MobileNodeInfobase : public Element {
