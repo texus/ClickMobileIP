@@ -70,6 +70,7 @@ void ProcessAdvertisements::push(int, Packet* packet)
                     _timers.back().second.initialize(this);
                     _timers.back().second.schedule_after_msec(1000);
                 }
+                // TODO re-registration when sequence number resets (reboot of FA)
 
                 return;
             }

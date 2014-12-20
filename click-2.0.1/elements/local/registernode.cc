@@ -66,7 +66,7 @@ void RegisterNode::push(int, Packet *p) {
         _timer.clear();
 
         // request accepted, adapt mobile node infobase
-        if(/*rep_h->lifetime == 0 && */ip_h->ip_src == _infobase->homeAgent) {
+        if(/*rep_h->lifetime == 0 && */ip_h->ip_src == _infobase->homeAgent) { //TODO lifetime should be 0?
             // returning to home network // TODO should this be done BEFORE sending deregistration request?
             _infobase->connected = true;
             _infobase->foreignAgent = _infobase->homeAgent;
@@ -151,7 +151,6 @@ void RegisterNode::run_timer(Timer* timer)
         if (_infobase->lifetime == 0)
         {
             _infobase->connected = false;
-            //TODO should something else happen here?
         }
     }
 
