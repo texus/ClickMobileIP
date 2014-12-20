@@ -174,7 +174,7 @@ void RelayRegistration::run_timer(Timer *timer) {
             }
         }
         else {
-            // remove pending request //TODO
+            // remove pending request when lifetime has expired //TODO
         }
     }
 

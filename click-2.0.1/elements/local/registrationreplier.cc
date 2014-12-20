@@ -77,19 +77,18 @@ void RegistrationReplier::push(int, Packet *p) {
         ip_head->ip_hl = 5;
         ip_head->ip_tos = 0; // Best-Effort
         ip_head->ip_len = htons(packet_size);
-        //ip_head->ip_id = 0; //TODO value?
         ip_head->ip_ttl = 64;
         ip_head->ip_p = 17; // UDP protocol
-        ip_head->ip_src = req_ip->ip_dst; // copied from destination address of the Registration Request //TODO see section 3.7.2.3, 3.8.3.1
+        ip_head->ip_src = req_ip->ip_dst; // copied from destination address of the Registration Request
         ip_head->ip_dst = req_ip->ip_src; // copied form source address of Registration Request to wich agent is replying
-        ip_head->ip_sum = click_in_cksum((unsigned char*)ip_head, sizeof(click_ip)); //TODO calculate in element?
+        ip_head->ip_sum = click_in_cksum((unsigned char*)ip_head, sizeof(click_ip));
 
         // set destination in annotation
         packet->set_dst_ip_anno(ip_head->ip_dst);
 
         // add UDP header
         click_udp *udp_head = (click_udp*)(ip_head + 1);
-        udp_head->uh_sport = req_udp->uh_dport; // copied form dst port of corresponding Registration Request //TODO variable instead of 434?
+        udp_head->uh_sport = req_udp->uh_dport; // copied form dst port of corresponding Registration Request
         udp_head->uh_dport = req_udp->uh_sport; // copied from source port of corresponding Registration Request
         uint16_t len = packet->length() - sizeof(click_ip);
         udp_head->uh_ulen = htons(len);
@@ -102,13 +101,7 @@ void RegistrationReplier::push(int, Packet *p) {
         rep_head->lifetime = req_rh->lifetime;
         rep_head->home_addr = req_rh->home_addr;
         rep_head->id = req_rh->id;
-
-        //if(code == 136) {
-            //TODO send home agent address when mobile node is discovering home agent address
-        //}
-        //else {
-            rep_head->home_agent = req_rh->home_agent;
-        //}
+        rep_head->home_agent = req_rh->home_agent;
 
         // Calculate the udp checksum
         udp_head->uh_sum = click_in_cksum_pseudohdr(click_in_cksum((unsigned char*)udp_head, packet_size - sizeof(click_ip)), ip_head, packet_size - sizeof(click_ip));

@@ -4,6 +4,7 @@
 #include <clicknet/ether.h>
 #include <clicknet/ip.h>
 #include <clicknet/udp.h>
+#include <ctime>
 
 #include "registrationrequester.hh"
 #include "mobilityagentadvertiser.hh"
@@ -85,11 +86,11 @@ void RegistrationRequester::run_timer(Timer *timer) {
 
 Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, uint32_t co_addr) {
 
-    // Provide a nonce for the identification
-    uint64_t id;
-    *((uint32_t*)&id) = Timestamp::now().subsec();
-    *(((uint32_t*)&id)+1) = Timestamp::now_steady().subsec();
-
+    // Provide a timestamp for the identification TODO 
+    uint64_t id = Timestamp::now().sec();
+    //*((uint32_t*)&id) = Timestamp::now().subsec();
+    //*(((uint32_t*)&id)+1) = Timestamp::now_steady().subsec();
+    
     // save new request to pending requests
     pending_request new_req;
     //TODO save link layer address for foreign agent?
@@ -119,11 +120,10 @@ Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, 
     ip_head->ip_hl = 5;
     ip_head->ip_tos = 0; // Best-Effort
     ip_head->ip_len = htons(packet_size);
-    //TODO ip-id necessary? Waarschijnlijk niet
-    ip_head->ip_ttl = 64; //TODO set to 1 if broadcasting request to all mobile agents
+    ip_head->ip_ttl = 64;
     ip_head->ip_p = 17; // UDP protocol
     ip_head->ip_src = _infobase->homeAddress; // mobile node home address is assumed to be known in this project
-    ip_head->ip_dst = ip_dst; //TODO if foreign agent IP-address is not known, set to 255.255.255.255 ("all mobility agents"). Don't we always know it???
+    ip_head->ip_dst = ip_dst;
     ip_head->ip_sum = click_in_cksum((unsigned char*)ip_head, sizeof(click_ip));
     // set destination in annotation
     packet->set_dst_ip_anno(ip_head->ip_dst);
@@ -137,13 +137,13 @@ Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, 
     // add Mobile IP fields
     registration_request_header *req_head = (registration_request_header*)(udp_head+1);
     req_head->type = 1; // Registration Request
-    req_head->flags = (0 << 7)  // Simultaneous bindings: not supported in this project //TODO Moet dit wel kunnen vragen, maar HA moet op correcte manier weigeren
-                    + (0 << 6)  // Broadcast datagrams //TODO check when to turn on
+    req_head->flags = (0 << 7)  // Simultaneous bindings (not requested by our mobile nodes)
+                    + (0 << 6)  // Broadcast datagrams, MN must not set this bit, since it cannot decapsulate datagrams itself
                     + (0 << 5)  // Decapsulation by mobile node: only when registering co-located COA (not supported)
-                    + (0 << 4)  // Minimal encapsulation //TODO check when to turn on.
-                    + (0 << 3)  // GRE encapsulation //TODO check when to turn on
+                    + (0 << 4)  // Minimal encapsulation (not requested by our mobile nodes)
+                    + (0 << 3)  // GRE encapsulation (not requested by our mobile nodes)
                     + (0 << 2)  // r (reserved), always sent as 0
-                    + (0 << 1)  // Reverse tunnelling //TODO check if supported?
+                    + (0 << 1)  // Reverse tunnelling (not supported in this project)
                     + (0);      // x, always sent as 0
     req_head->lifetime = htons(lifetime); //TODO If not specified in advertisement, use (ADJUSTABLE) default ICMP Router Advertisement lifetime
     req_head->home_addr = _infobase->homeAddress.addr();
