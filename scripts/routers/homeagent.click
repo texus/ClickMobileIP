@@ -12,9 +12,9 @@ $private_address, $public_address, $default_gateway
                                                        CARE_OF_ADDRESS $public_address,
                                                        HOME_AGENT true,
                                                        FOREIGN_AGENT false,
-                                                       MaxAdvertisementInterval 4,
-                                                       MinAdvertisementInterval 3,
-                                                       AdvertisementLifetime 12,
+                                                       MaxAdvertisementInterval 9,
+                                                       MinAdvertisementInterval 9,
+                                                       AdvertisementLifetime 27,
                                                        RegistrationLifetime 100,
                                                        Busy false)
 
