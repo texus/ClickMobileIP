@@ -16,14 +16,19 @@ AgentSolicitation::~AgentSolicitation()
 
 int AgentSolicitation::configure(Vector<String> &conf, ErrorHandler *errh) {
 
+    bool maxRetriesGiven;
     if (cp_va_kparse(conf, this, errh,
                      "INFOBASE", cpkP + cpkM, cpElement, &_infobase,
                      "SRC_IP", cpkM, cpIPAddress, &_srcIp,
+                     "MAX_RETRIES", cpkC, &maxRetriesGiven, cpUnsigned, &_maxRetries,
                      cpEnd) < 0)
         return -1;
 
+    if (!maxRetriesGiven)
+        _maxRetries = 5;
+
     _timer.initialize(this);
-    _timer.schedule_after_msec(10); // Let the mobile node send a solicitation message when it starts
+    _timer.schedule_after_msec(1000);
     return 0;
 }
 
@@ -38,8 +43,7 @@ void AgentSolicitation::run_timer(Timer* timer)
     }
 
     // If no router responds after a number of messages than stop sending messages
-    // TODO: Make the amount configurable
-    if (_messagesSendInRow >= 5)
+    if (_messagesSendInRow >= _maxRetries)
     {
         timer->schedule_after_msec(1000);
         return;
@@ -63,7 +67,6 @@ void AgentSolicitation::run_timer(Timer* timer)
     iph->ip_hl = 5;
     iph->ip_tos = 0;
     iph->ip_len = htons(packetsize);
-    iph->ip_id = 0; // TODO: Do we need an id?
     iph->ip_ttl = 1; // TTL must be 1 in solicitation
     iph->ip_p = 1; // protocol = ICMP
     iph->ip_src = _srcIp;

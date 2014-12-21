@@ -26,6 +26,7 @@ class AgentSolicitation : public Element {
         Timer _timer;
 
         unsigned int _messagesSendInRow;
+        unsigned int _maxRetries;
 };
 
 struct agent_solicitation_header {
