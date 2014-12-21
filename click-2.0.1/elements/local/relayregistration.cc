@@ -2,6 +2,7 @@
 #include <click/confparse.hh>
 #include <click/error.hh>
 #include <clicknet/udp.h>
+#include <clicknet/ether.h>
 #include "relayregistration.hh"
 #include "registrationrequester.hh"
 #include "registrationreplier.hh"
@@ -170,7 +171,18 @@ void RelayRegistration::run_timer(Timer *timer) {
             --lifetime;
             it->remaining_lifetime = htons(lifetime);
             if(it->requested_lifetime - it->remaining_lifetime > 7) {
-                // if request is pending for longer than 7 seconds, send timeout reply + delete from list //TODO
+                // if request is pending for longer than 7 seconds, send timeout reply
+            	uint8_t code = 78; // Registratioin timeout
+            	in_addr ip_src = it->ip_dst.in_addr(); // IP source of reply copied from destination address of corresponding Request
+            	in_addr ip_dst = it->ip_src.in_addr(); // IP destination = home address from corresponding Request
+            	uint16_t udp_dst = it->udp_src; // copied from UDP source port of corresponding Request
+            	uint64_t id = it->id;
+            	in_addr home_agent = it->home_agent.in_addr();
+            	Packet *packet = createReply(code, ip_src, ip_dst, udp_dst, id, home_agent);
+            	output(0).push(packet);
+
+            	// delete pending request entry
+            	_infobase->pending_requests.erase(it);
             }
         }
         else {
@@ -189,6 +201,57 @@ void RelayRegistration::run_timer(Timer *timer) {
             // remove from visitor list //TODO
         //}
     }
+}
+
+Packet* RelayRegistration::createReply(uint8_t code, in_addr ip_src, in_addr ip_dst, uint16_t udp_dst,
+		uint64_t id, in_addr home_agent) {
+	int packet_size = sizeof(click_ip) + sizeof(click_udp) + sizeof(registration_reply_header);
+	int headroom = sizeof(click_ether);
+	WritablePacket *packet = Packet::make(headroom, 0, packet_size, 0);
+
+	if (packet == 0) {
+		click_chatter("Could not make packet");
+		return 0;
+	}
+
+	memset(packet->data(), 0, packet->length());
+
+	// add IP header
+	click_ip *ip_head = (click_ip*)packet->data();
+	ip_head->ip_v = 4;
+	ip_head->ip_hl = 5;
+	ip_head->ip_tos = 0; // Best-Effort
+	ip_head->ip_len = htons(packet_size);
+	ip_head->ip_ttl = 64;
+	ip_head->ip_p = 17; // UDP protocol
+	ip_head->ip_src = ip_src;
+	ip_head->ip_dst = ip_dst;
+	ip_head->ip_sum = click_in_cksum((unsigned char*)ip_head, sizeof(click_ip));
+
+	// set destination in annotation
+	packet->set_dst_ip_anno(ip_dst);
+
+	// add UDP header
+	click_udp *udp_head = (click_udp*)(ip_head + 1);
+	udp_head->uh_sport = 434;
+	udp_head->uh_dport = udp_dst;
+	uint16_t len = packet->length() - sizeof(click_ip);
+	udp_head->uh_ulen = htons(len);
+
+	// add mobile IP registration header fields
+	registration_reply_header *rep_head = (registration_reply_header*)(udp_head + 1);
+	rep_head->type = 3; // Registration Reply
+	rep_head->code = code;
+	//rep_head->lifetime = TODO this is ignored, set to 0?
+	rep_head->home_addr = ip_dst.s_addr;
+	rep_head->id = id;
+	rep_head->home_agent = home_agent.s_addr;
+
+	// calculate UDP checksum
+	udp_head->uh_sum = click_in_cksum_pseudohdr
+			(click_in_cksum((unsigned char*)udp_head, packet_size - sizeof(click_ip)), ip_head, packet_size - sizeof(click_ip));
+
+	return packet;
 }
 
 CLICK_ENDDECLS

@@ -146,7 +146,7 @@ uint8_t RegistrationReplier::check_acceptability(Packet *packet) {
 
     // if something else is wrong, return 'Reason unspecified' code //TODO when?
 
-    return 1; //TODO always return 1 when S not supported? Or only when S bit set?
+    return 1; // If request is accepted, return code 1, since simultaneous bindings are not supported
 }
 
 CLICK_ENDDECLS

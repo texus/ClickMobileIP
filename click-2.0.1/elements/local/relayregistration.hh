@@ -31,6 +31,8 @@ private:
     IPAddress _privateIP;
     Timer _timer;
 
+    Packet* createReply(uint8_t code, in_addr ip_src, in_addr ip_dst, uint16_t udp_dst, uint64_t id, in_addr home_agent);
+
 };
 
 CLICK_ENDDECLS
