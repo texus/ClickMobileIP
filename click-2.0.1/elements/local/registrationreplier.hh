@@ -26,6 +26,7 @@ private:
     HomeAgentInfobase *_infobase;
     IPAddress          _publicIP;
     IPAddress          _privateIP;
+    static IPAddress   _allMobileAgentsAddress;
 
     uint8_t check_acceptability(Packet *packet);
 };

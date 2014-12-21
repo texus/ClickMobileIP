@@ -6,7 +6,6 @@
 CLICK_DECLS
 
 struct pending_request {
-    // link-layer address if applicable //TODO when applicable?
     // IP destination address of request
     in_addr ip_dst;
     // COA used in registration
