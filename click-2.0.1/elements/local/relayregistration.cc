@@ -81,7 +81,7 @@ void RelayRegistration::push(int, Packet *p) {
             // set annotation
             packet->set_dst_ip_anno(ip_head->ip_dst);
             // set UDP fields
-            udp_head->uh_sport = udp_h->uh_sport;
+            udp_head->uh_sport = htons(rand() % (65535 - 49152) + 49152);
             udp_head->uh_dport = udp_h->uh_dport; // 434
             udp_head->uh_sum = htons(0);
             udp_head->uh_sum = click_in_cksum_pseudohdr(click_in_cksum((unsigned char*)udp_head, packet_size - sizeof(click_ip)), ip_head, packet_size - sizeof(click_ip));
@@ -150,7 +150,7 @@ void RelayRegistration::push(int, Packet *p) {
             // set UDP fields
             uint16_t udp_src_prt = ntohs(udp_h->uh_sport);
             udp_head->uh_sport = udp_h->uh_sport;
-            udp_head->uh_dport = udp_h->uh_dport;
+            udp_head->uh_dport = htons(entry.udp_src);
 
             udp_head->uh_sum = htons(0);
             udp_head->uh_sum = click_in_cksum_pseudohdr(click_in_cksum((unsigned char*)udp_head, packet_size - sizeof(click_ip)), ip_head, packet_size - sizeof(click_ip));
