@@ -58,9 +58,14 @@ void RegistrationRequester::push(int, Packet *p) {
 
     // Check if in home network
     if(adv_src_addr == _infobase->homeAgent) {
-        if(_infobase->foreignAgent != _infobase->homeAgent && home_agent) {
+        if(_infobase->foreignAgent != _infobase->homeAgent && home_agent)
+        {
+            // adapt routing info
+            _infobase->connected = true;
+            _infobase->foreignAgent = _infobase->homeAgent;
+            _infobase->lifetime = 0;
+
             // send deregistration request
-        	// TODO adapt routing info here?
             Packet *packet = createRequest(adv_src_addr, 0, _infobase->homeAddress);
             if(packet != 0){
                 output(0).push(packet);

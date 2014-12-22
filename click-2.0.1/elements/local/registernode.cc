@@ -80,13 +80,7 @@ void RegisterNode::push(int, Packet *p) {
         _timer.clear();
 
         // request accepted, adapt mobile node infobase
-        if(/*rep_h->lifetime == 0 && */ip_h->ip_src == _infobase->homeAgent) { //TODO lifetime should be 0?
-            // returning to home network // TODO should this be done BEFORE sending deregistration request?
-            _infobase->connected = true;
-            _infobase->foreignAgent = _infobase->homeAgent;
-            _infobase->lifetime = 0;
-        }
-        else {
+        if(ip_h->ip_src != _infobase->homeAgent) {
             // registering on foreign network
             _infobase->connected = true;
             _infobase->foreignAgent = IPAddress(most_recent->ip_dst);
