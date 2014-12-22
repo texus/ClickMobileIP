@@ -5,7 +5,6 @@
 #include <clicknet/ip.h>
 #include <clicknet/udp.h>
 #include <ctime>
-#include <endian.h>
 
 #include "registrationrequester.hh"
 #include "mobilityagentadvertiser.hh"
