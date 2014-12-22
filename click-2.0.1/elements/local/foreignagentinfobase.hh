@@ -17,7 +17,6 @@ struct visitor_entry {
     uint16_t remaining_lifetime; // remaining lifetime
 };
 
-//TODO : one infobase for 'mobile agent' instead of separate for home and foreign agent functions?
 class ForeignAgentInfobase: public Element {
 public:
     ForeignAgentInfobase();

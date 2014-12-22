@@ -5,6 +5,7 @@
 #include <clicknet/ip.h>
 #include <clicknet/udp.h>
 #include <ctime>
+#include <endian.h>
 
 #include "registrationrequester.hh"
 #include "mobilityagentadvertiser.hh"
@@ -45,6 +46,7 @@ void RegistrationRequester::push(int, Packet *p) {
     if(adv_src_addr == _infobase->homeAgent) {
         if(_infobase->foreignAgent != _infobase->homeAgent && home_agent) {
             // send deregistration request
+        	// TODO adapt routing info here?
             Packet *packet = createRequest(adv_src_addr, 0, _infobase->homeAddress);
             if(packet != 0){
                 output(0).push(packet);
@@ -74,11 +76,15 @@ void RegistrationRequester::run_timer(Timer *timer) {
         if(lifetime > 0) {
             --lifetime;
             it->remaining_lifetime = htons(lifetime);
+            // when no reply has been received within reasonable time, another registration request MAY be transmitted! //TODO
+            //int max_interval = it->requested_lifetime;
+            //int min_interval = max(message_sizes + 2 * RTT to home agent + 100 ms + 200 ms, 1s);
+            //int time_to_next_ret = min(max_interval, 2 * interval)
         }
         else {
-            // remove pending requests whose lifetime has expired //TODO
+            // remove pending requests whose lifetime has expired
+        	_infobase->pending.erase(it);
         }
-        // when no reply has been received within reasonable time, another registration request MAY be transmitted! //TODO
     }
 
     timer->schedule_after_msec(1000);
@@ -87,13 +93,12 @@ void RegistrationRequester::run_timer(Timer *timer) {
 Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, uint32_t co_addr) {
 
     // Provide a timestamp for the identification TODO 
-    uint64_t id = Timestamp::now().sec();
-    //*((uint32_t*)&id) = Timestamp::now().subsec();
-    //*(((uint32_t*)&id)+1) = Timestamp::now_steady().subsec();
+    uint64_t id;
+    *((uint32_t*)&id) = Timestamp::now().subsec();
+    *(((uint32_t*)&id)+1) = Timestamp::now_steady().subsec();
     
     // save new request to pending requests
     pending_request new_req;
-    //TODO save link layer address for foreign agent?
     new_req.ip_dst = ip_dst;
     new_req.co_addr = co_addr;
     new_req.id = id;

@@ -8,6 +8,8 @@
 
 CLICK_DECLS
 
+IPAddress RegistrationReplier::_allMobileAgentsAddress = IPAddress("255.255.255.255");
+
 RegistrationReplier::RegistrationReplier() {}
 
 RegistrationReplier::~RegistrationReplier() {}
@@ -117,17 +119,6 @@ void RegistrationReplier::push(int, Packet *p) {
 }
 
 uint8_t RegistrationReplier::check_acceptability(Packet *packet) {
-    /*
-    Accepted
-        0   registration accepted
-        1   registratin accepted but simultaneous mobility bindings denied
-    Denied by home agent
-        128 reason unspecified
-        ...
-        134 poorly formed Request
-        135 too many simultaneous mobility bindings
-        136 unknown home agent address
-    */
     click_ip *req_ip = (click_ip*)packet->data();
     click_udp *req_udp = (click_udp*)(req_ip + 1);
     registration_request_header *req_rh = (registration_request_header*)(req_udp + 1);
@@ -138,11 +129,24 @@ uint8_t RegistrationReplier::check_acceptability(Packet *packet) {
         return 134;
     }
 
-    // if S bit set and already bound, return 'Too many simultaneous mobility bindings' code //TODO or also when just S bit set?
-    //if(((flags >> 7) & 1) && ) {
-    //}
+    // if S bit set and already bound, return 'Too many simultaneous mobility bindings' code (135)
+    // check if mobile node requesting registration is already registered
+    bool already_bound = false;
+    for (Vector<MobileNodeInfo>::iterator it = _infobase->mobileNodesInfo.begin();
+    		it != _infobase->mobileNodesInfo.end(); ++it) {
+    	if(it->address == req_rh->home_addr) {
+    		already_bound = true;
+    		break;
+    	}
+    }
+    if(((flags >> 7) & 1) && already_bound) {
+    	return 135;
+    }
 
-    // if HomeAgent field in request is not unicast, return 'Unknown home agent address' code //TODO
+    // if HomeAgent field in request is not unicast, return 'Unknown home agent address' code (136)
+    if (req_rh->home_agent == _allMobileAgentsAddress.addr()) {
+    	return 136;
+    }
 
     // if something else is wrong, return 'Reason unspecified' code //TODO when?
 
