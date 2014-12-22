@@ -5,6 +5,20 @@
 #include "registrationreplier.hh"
 #include "registernode.hh"
 
+namespace {
+    uint64_t ntohll(uint64_t value)
+    {
+        int num = 42;
+        if (*(char *)&num == 42) {
+            uint32_t high_part = htonl((uint32_t)(value >> 32));
+            uint32_t low_part = htonl((uint32_t)(value & 0xFFFFFFFFLL));
+            return (((uint64_t)low_part) << 32) | high_part;
+        } else {
+            return value;
+        }
+    }
+}
+
 CLICK_DECLS
 
 RegisterNode::RegisterNode() :_timer(this) {}
@@ -55,7 +69,7 @@ void RegisterNode::push(int, Packet *p) {
     // if not matching, discard silently
     int id1 = rep_h->id;
     int id2 = most_recent->id;
-    if(rep_h->id != most_recent->id) {
+    if(ntohll(rep_h->id) != most_recent->id) {
         p->kill();
         return;
     }
