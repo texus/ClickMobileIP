@@ -49,9 +49,14 @@ void RelayRegistration::push(int, Packet *p) {
             // if non-zero flags in zero-bits of request, reject with code 70 (poorly formed request)
             uint8_t flags = req_h->flags;
             if(flags != 0 || (flags >> 2) != 0) {
-                // TODO send reply message
-                // Packet *packet = createReply(70);
-                // output(0).push(packet);
+                uint8_t code = 70;
+                in_addr ip_src = ip_h->ip_dst;
+                in_addr ip_dst = ip_h->ip_src;
+                uint16_t udp_dst = udp_h->uh_sport;
+                uint64_t identification = req_h->id;
+                in_addr home_agent = *(struct in_addr *)&req_h->home_agent;
+                Packet *packet = createReply(code, ip_src, ip_dst, udp_dst, identification, home_agent);
+                output(0).push(packet);
                 p->kill();
                 return;
             }
