@@ -2,7 +2,7 @@
 #define CLICK_FOREIGN_AGENT_INFOBASE_HH
 
 #include <click/element.hh>
-#include <click/hashmap.hh>
+#include <click/hashtable.hh>
 
 CLICK_DECLS
 
@@ -28,7 +28,7 @@ public:
     int configure(Vector<String>&, ErrorHandler*);
 
     Vector<visitor_entry> pending_requests;
-    HashMap<IPAddress, visitor_entry> current_registrations;
+    HashTable<IPAddress, visitor_entry> current_registrations;
 
     // TODO care of address
 

@@ -31,6 +31,8 @@ private:
     IPAddress _privateIP;
     Timer _timer;
 
+    void relayRequest(Packet *p);
+    void relayReply(Packet *p);
     Packet* createReply(uint8_t code, in_addr ip_src, in_addr ip_dst, uint16_t udp_dst, uint64_t id, in_addr home_agent);
 
 };
