@@ -3,11 +3,12 @@
 
 #include <click/element.hh>
 #include <click/hashtable.hh>
+#include <click/etheraddress.hh>
 
 CLICK_DECLS
 
 struct visitor_entry {
-    // link-layer source address of the mobile node //TODO
+    EtherAddress eth_src; // link-layer source address of the mobile node
     IPAddress ip_src; // mobile node IP home address
     IPAddress ip_dst; // destination IP address
     uint16_t udp_src; // UDP source port

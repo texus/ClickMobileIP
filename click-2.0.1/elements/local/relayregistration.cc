@@ -26,8 +26,9 @@ int RelayRegistration::configure(Vector<String> &conf, ErrorHandler *errh) {
 
 void RelayRegistration::push(int, Packet *p) {
 	// get relevant headers
-	click_ip *ip_h = (click_ip *)p->data();
-	uint32_t packet_size = p->length();
+	click_ether *eth_h = (click_ether *)p->data();
+	click_ip *ip_h = (click_ip *)(eth_h + 1);
+	uint32_t packet_size = p->length() - sizeof(click_ether);
 
 	// check if ICMP error message //TODO
 	if (ip_h->ip_p == 1) {
@@ -122,10 +123,11 @@ void RelayRegistration::run_timer(Timer *timer) {
 
 void RelayRegistration::relayRequest(Packet *p) {
 	// get relevant headers
-	click_ip *ip_h = (click_ip *)p->data();
+	click_ether *eth_h = (click_ether *)p->data();
+	click_ip *ip_h = (click_ip *)(eth_h + 1);
 	click_udp *udp_h = (click_udp *)(ip_h + 1);
 	registration_request_header *req_h = (registration_request_header *)(udp_h + 1);
-	uint32_t packet_size = p->length();
+	uint32_t packet_size = p->length() - sizeof(click_ether);
 
 	// check if home address does not belong to network interface of foreign agent //TODO
 
@@ -170,7 +172,7 @@ void RelayRegistration::relayRequest(Packet *p) {
 
 	// add pending request to visitor table
 	visitor_entry entry;
-	// link-layer source address of mobile node //TODO
+	entry.eth_src = EtherAddress(eth_h->ether_shost);
 	entry.ip_src = ip_h->ip_src; // mobile node Home Address
 	entry.ip_dst = ip_h->ip_dst;
 	entry.udp_src = ntohs(udp_h->uh_sport);
@@ -182,7 +184,8 @@ void RelayRegistration::relayRequest(Packet *p) {
 
 	// relay to home agent
 	WritablePacket *packet = p->uniqueify();
-	click_ip *ip_head = (click_ip *)packet->data();
+	click_ether *eth_head = (click_ether *)packet->data();
+	click_ip *ip_head = (click_ip *)(eth_head + 1);
 	click_udp *udp_head = (click_udp *)(ip_head + 1);
 	// set IP fields
 	ip_head->ip_len = htons(packet_size);
@@ -204,10 +207,11 @@ void RelayRegistration::relayRequest(Packet *p) {
 void RelayRegistration::relayReply(Packet *p) {
 
 	// get relevant headers
-	click_ip *ip_h = (click_ip *)p->data();
+	click_ether *eth_h = (click_ether *)p->data();
+	click_ip *ip_h = (click_ip *)(eth_h + 1);
 	click_udp *udp_h = (click_udp *)(ip_h + 1);
 	registration_reply_header *rep_h = (registration_reply_header *)(udp_h + 1);
-	uint32_t packet_size = p->length();
+	uint32_t packet_size = p->length() - sizeof(click_ether);
 
 	// If the UDP checksum is wrong then discard the packet silently.
 	// The checksum is still part of the packet, which is why we check for not null, instead of checking whether what we calculate equals the checksum.
@@ -284,7 +288,8 @@ void RelayRegistration::relayReply(Packet *p) {
 
 	// relay the reply to the mobile node
 	WritablePacket *packet = p->uniqueify();
-	click_ip *ip_head = (click_ip *)packet->data();
+	click_ether *eth_head = (click_ether *)packet->data();
+	click_ip *ip_head = (click_ip *)(eth_head + 1);
 	click_udp *udp_head = (click_udp *)(ip_head + 1);
 
 	// set IP fields

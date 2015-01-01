@@ -69,11 +69,14 @@ $private_address, $public_address, $default_gateway
 
     // Relay registration requests and replies
     regs[0]
+        -> Unstrip(14)
         -> relayRegistration :: RelayRegistration(infobase, PRIVATE_IP $private_address)[0]
+        -> Strip(14)
         -> SetIPChecksum
         -> [0]arpq0
 
     relayRegistration[1]
+        -> Strip(14)
         -> SetIPChecksum
         -> rt
 
