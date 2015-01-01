@@ -32,7 +32,7 @@ void RelayRegistration::push(int, Packet *p) {
 	// check if ICMP error message //TODO
 	if (ip_h->ip_p == 1) {
 		click_icmp *icmp_h = (click_icmp *)(ip_h + 1);
-		uint8_t type = icmp_h->icmp_type;
+		/*uint8_t type = icmp_h->icmp_type;
 		// if HA unreachable, send Reply to MN denying request
 		if(type == 3) {
 			uint8_t icmp_code = icmp_h->icmp_code;
@@ -56,7 +56,7 @@ void RelayRegistration::push(int, Packet *p) {
 				// other ICMP error TODO
 				// send reply with code 88
 			}
-		}
+		}*/
 	}
 	else {
 		click_udp *udp_h = (click_udp *)(ip_h + 1);
