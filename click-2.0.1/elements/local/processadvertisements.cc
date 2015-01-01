@@ -33,12 +33,17 @@ void ProcessAdvertisements::push(int, Packet* packet)
         advertisement_header* advh = (advertisement_header*)(iph + 1);
         if (advh->type == 9) // Router Advertisement
         {
+        	uint16_t last_seq_nr = -1;
             mobile_advertisement_header* madvh = (mobile_advertisement_header*)(advh + 1);
             if (madvh->type == 16)
             {
                 HashMap<IPAddress, Packet*>::Pair* p = _infobase->advertisements.find_pair(advh->address);
                 if (p != 0)
                 {
+                	click_ip *ip_head1 = (click_ip *)p->value->data();
+                	advertisement_header *adv_head1 = (advertisement_header*)(ip_head1 + 1);
+                	mobile_advertisement_header *madv_head1 = (mobile_advertisement_header*)(adv_head1 + 1);
+                	last_seq_nr = madv_head1->seq_nr;
                     for (Vector<Pair<IPAddress, Timer> >::iterator it = _timers.begin(); it != _timers.end(); ++it)
                     {
                         if (it->first == p->key)
@@ -58,6 +63,13 @@ void ProcessAdvertisements::push(int, Packet* packet)
                     // If there is no connection yet then try to connect to this agent
                     if (!_infobase->connected)
                     {
+                        _infobase->advertisements.insert(advh->address, packet->clone());
+
+                        _lastRegistrationAttempt.assign_now();
+                        output(1).push(packet);
+                    }
+                    // If sequence number resets (without rollover), re-register with FA
+                    else if (madvh->seq_nr <= last_seq_nr && madvh->seq_nr < 256) {
                         _infobase->advertisements.insert(advh->address, packet->clone());
 
                         _lastRegistrationAttempt.assign_now();
