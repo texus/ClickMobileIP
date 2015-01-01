@@ -25,13 +25,14 @@ namespace {
 
 CLICK_DECLS
 
-RegistrationRequester::RegistrationRequester(): _timer(this) {}
+RegistrationRequester::RegistrationRequester(): _timer(this), _default_lifetime(1800) {}
 
 RegistrationRequester::~RegistrationRequester() {}
 
 int RegistrationRequester::configure(Vector<String>& conf, ErrorHandler *errh) {
     if (cp_va_kparse(conf, this, errh,
             "INFOBASE", cpkP + cpkM, cpElement, &_infobase,
+			"DEFAULT_LIFETIME", cpkP, cpInteger, &_default_lifetime,
             cpEnd) < 0)
         return -1;
 
