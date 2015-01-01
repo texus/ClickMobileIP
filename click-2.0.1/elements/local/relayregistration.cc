@@ -258,14 +258,7 @@ void RelayRegistration::relayReply(Packet *p) {
 			// put new visitor entry in visitor list
 			// (if it exists, old visitor list entry with same home address will be overwritten, i.e. updated)
 			// TODO does this hashmap support multiple values / key? if yes, erase these before assigning new entry
-			visitor_entry new_entry;
-			// TODO link-layer source address of mobile  node
-			new_entry.ip_src = entry.ip_src;
-			new_entry.ip_dst = entry.ip_dst;
-			new_entry.udp_src = entry.udp_src;
-			new_entry.home_agent = entry.home_agent;
-			new_entry.id = entry.id;
-			new_entry.requested_lifetime = entry.requested_lifetime;
+			visitor_entry new_entry = entry;
 			new_entry.remaining_lifetime = rep_h->lifetime; // set to granted lifetime, so FA does not time out befor MN
 			_infobase->current_registrations.set(mn_home_addr, new_entry);
 			// delete pending request
