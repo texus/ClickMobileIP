@@ -129,6 +129,12 @@ uint8_t RegistrationReplier::check_acceptability(Packet *packet) {
         return 134;
     }
 
+    // if D bit set, return Reply denying Request with 'Reason unspecified' code (),
+    // since this implementation does not support co-located Care-of-Addresses
+    if((flags >> 5) & 1) {
+    	return 128;
+    }
+
     // if S bit set and already bound, return 'Too many simultaneous mobility bindings' code (135)
     // check if mobile node requesting registration is already registered
     bool already_bound = false;
