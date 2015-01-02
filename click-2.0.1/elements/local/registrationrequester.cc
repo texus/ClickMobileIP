@@ -90,7 +90,7 @@ void RegistrationRequester::run_timer(Timer *timer) {
 
     // decrease remaining lifetime of pending requests
     Vector<Vector<pending_request>::iterator> elementsToBeRemoved;
-    for(Vector<pending_request>::iterator it = _infobase->pending.begin(); it != _infobase->pending.end(); ++it) {
+    for(Vector<pending_request>::iterator it = _infobase->pending.begin(); it != _infobase->pending.end(); ) {
         uint16_t lifetime = ntohs(it->remaining_lifetime);
         if(lifetime > 0) {
             --lifetime;
@@ -99,10 +99,12 @@ void RegistrationRequester::run_timer(Timer *timer) {
             //int max_interval = it->requested_lifetime;
             //int min_interval = max(message_sizes + 2 * RTT to home agent + 100 ms + 200 ms, 1s);
             //int time_to_next_ret = min(max_interval, 2 * interval)
+
+            ++it;
         }
         else {
             // remove pending requests whose lifetime has expired
-        	_infobase->pending.erase(it);
+            it = _infobase->pending.erase(it);
         }
     }
 

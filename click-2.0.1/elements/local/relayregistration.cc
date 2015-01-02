@@ -109,9 +109,9 @@ void RelayRegistration::push(int, Packet *p) {
 
 void RelayRegistration::run_timer(Timer *timer) {
 	// lower remaining lifetime of pending requests
-	for(Vector<visitor_entry>::iterator it = _infobase->pending_requests.begin(); it != _infobase->pending_requests.end(); ++it) {
+	for(Vector<visitor_entry>::iterator it = _infobase->pending_requests.begin(); it != _infobase->pending_requests.end();) {
 		uint16_t lifetime = ntohs(it->remaining_lifetime);
-		if(it->remaining_lifetime > 1) {
+		if(it->remaining_lifetime > 0) {
 			--lifetime;
 			it->remaining_lifetime = htons(lifetime);
 			if(it->requested_lifetime - it->remaining_lifetime > 7) {
@@ -126,11 +126,14 @@ void RelayRegistration::run_timer(Timer *timer) {
 				output(0).push(packet);
 
 				// delete pending request entry
-				_infobase->pending_requests.erase(it);
+				it = _infobase->pending_requests.erase(it);
 			}
+			else
+			    ++it;
 		}
 		else {
-			// remove pending request when lifetime has expired //TODO
+			// remove pending request when lifetime has expired
+			it = _infobase->pending_requests.erase(it);
 		}
 	}
 
