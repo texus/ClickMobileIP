@@ -162,7 +162,7 @@ void RegisterNode::run_timer(Timer* timer)
             // & relay to element that sends requests
             Packet *p = _infobase->advertisements[_infobase->foreignAgent];
             if(p != 0)
-                output(0).push(p);
+                output(0).push(p->clone());
         }
         if (_infobase->lifetime == 0)
         {
