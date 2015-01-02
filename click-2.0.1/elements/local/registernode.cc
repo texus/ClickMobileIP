@@ -101,6 +101,9 @@ void RegisterNode::push(int, Packet *p) {
 
             _timer.schedule_after_sec(1);
         }
+        else {
+            _infobase->connected = true;
+        }
 
         // remove pending request
         _infobase->pending.erase(most_recent);

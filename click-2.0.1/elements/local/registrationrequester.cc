@@ -61,7 +61,6 @@ void RegistrationRequester::push(int, Packet *p) {
         if(_infobase->foreignAgent != _infobase->homeAgent && home_agent)
         {
             // adapt routing info
-            _infobase->connected = true;
             _infobase->foreignAgent = _infobase->homeAgent;
             _infobase->lifetime = 0;
 

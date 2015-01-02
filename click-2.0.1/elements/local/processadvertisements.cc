@@ -75,8 +75,9 @@ void ProcessAdvertisements::push(int, Packet* packet)
                         _lastRegistrationAttempt.assign_now();
                         output(1).push(packet);
                     }
-                    else
+                    else {
                         _infobase->advertisements.insert(advh->address, packet);
+                    }
 
                     _timers.push_back(Pair<IPAddress, Timer>(advh->address, Timer(this)));
                     _timers.back().second.initialize(this);
@@ -137,6 +138,7 @@ void ProcessAdvertisements::run_timer(Timer* timer)
         }
         p->value->kill();
         _infobase->advertisements.erase(address);
+        _infobase->connected = false;
 
         for (Vector<Pair<IPAddress, Timer> >::iterator it = _timers.begin(); it != _timers.end(); ++it)
         {
