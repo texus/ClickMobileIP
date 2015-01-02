@@ -40,10 +40,10 @@ void ProcessAdvertisements::push(int, Packet* packet)
                 HashMap<IPAddress, Packet*>::Pair* p = _infobase->advertisements.find_pair(advh->address);
                 if (p != 0)
                 {
-                	click_ip *ip_head1 = (click_ip *)p->value->data();
-                	advertisement_header *adv_head1 = (advertisement_header*)(ip_head1 + 1);
-                	mobile_advertisement_header *madv_head1 = (mobile_advertisement_header*)(adv_head1 + 1);
-                	last_seq_nr = madv_head1->seq_nr;
+                    click_ip *ip_head = (click_ip *)p->value->data();
+                    advertisement_header *adv_head = (advertisement_header*)(ip_head + 1);
+                    mobile_advertisement_header *madv_head = (mobile_advertisement_header*)(adv_head + 1);
+                    last_seq_nr = madv_head->seq_nr;
                     for (Vector<Pair<IPAddress, Timer> >::iterator it = _timers.begin(); it != _timers.end(); ++it)
                     {
                         if (it->first == p->key)
