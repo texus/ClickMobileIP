@@ -370,7 +370,7 @@ Packet* RelayRegistration::createReply(uint8_t code, in_addr ip_src, in_addr ip_
 	registration_reply_header *rep_head = (registration_reply_header*)(udp_head + 1);
 	rep_head->type = 3; // Registration Reply
 	rep_head->code = code;
-	//rep_head->lifetime = TODO this is ignored, set to 0?
+	rep_head->lifetime = 0; // ignored at reception since code > 1
 	rep_head->home_addr = ip_dst.s_addr;
 	rep_head->id = id;
 	rep_head->home_agent = home_agent.s_addr;

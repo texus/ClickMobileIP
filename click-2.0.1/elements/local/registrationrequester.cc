@@ -169,7 +169,7 @@ Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, 
                     + (0 << 2)  // r (reserved), always sent as 0
                     + (0 << 1)  // Reverse tunnelling (not supported in this project)
                     + (0);      // x, always sent as 0
-    req_head->lifetime = htons(lifetime); //TODO If not specified in advertisement, use (ADJUSTABLE) default ICMP Router Advertisement lifetime
+    req_head->lifetime = htons(lifetime);
     req_head->home_addr = _infobase->homeAddress.addr();
     req_head->home_agent = _infobase->homeAgent.addr();
     req_head->co_addr = co_addr;

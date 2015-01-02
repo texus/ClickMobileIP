@@ -157,7 +157,6 @@ void ProcessAdvertisements::run_timer(Timer* timer)
             _lastRegistrationAttempt.assign_now();
 
             // Just connect to the first router advertisement that we still have in the cache
-            // TODO: Should we look for the one with the highest lifetime instead?
             output(1).push(_infobase->advertisements.begin().pair()->value->clone());
         }
     }
