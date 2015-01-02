@@ -52,7 +52,6 @@ void Encapsulator::push(int, Packet* innerPacket) {
     iph->ip_hl = 5;
     iph->ip_tos = inneriph->ip_tos;
     iph->ip_len = htons(sizeof(click_ip) + ntohs(inneriph->ip_len));
-    iph->ip_id = htons(0); /// TODO: What value should go here?
     iph->ip_ttl = 200;
     iph->ip_p = 4; // protocol = IP-in-IP
     iph->ip_src.s_addr = _srcIp; // ip address of encapsulator
