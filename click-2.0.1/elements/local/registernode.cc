@@ -26,7 +26,15 @@ RegisterNode::RegisterNode() :_timer(this) {}
 RegisterNode::~RegisterNode() {}
 
 int RegisterNode::configure(Vector<String> &conf, ErrorHandler *errh) {
-    if(cp_va_kparse(conf, this, errh, "INFOBASE", cpkP + cpkM, cpElement, &_infobase, cpEnd) < 0) return -1;
+
+    bool almostExpiredLifetimeGiven;
+    if(cp_va_kparse(conf, this, errh,
+                    "INFOBASE", cpkP + cpkM, cpElement, &_infobase,
+                    "ALMOST_EXPIRED_LIFETIME", cpkC, &almostExpiredLifetimeGiven, cpUnsigned, &_almostExpiredLifetime,
+                    cpEnd) < 0) return -1;
+
+    if (!almostExpiredLifetimeGiven)
+        _almostExpiredLifetime = 3;
 
     _timer.initialize(this);
     return 0;
@@ -148,7 +156,7 @@ void RegisterNode::run_timer(Timer* timer)
     {
         _infobase->lifetime--;
 
-        if (_infobase->lifetime == 3) //TODO get good value for this
+        if (_infobase->lifetime == _almostExpiredLifetime)
         {
             // when registration almost expired, look for advertisement of current foreign agent
             // & relay to element that sends requests

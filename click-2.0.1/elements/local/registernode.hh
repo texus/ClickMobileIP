@@ -29,6 +29,8 @@ private:
 private:
     MobileNodeInfobase *_infobase;
 
+    unsigned int _almostExpiredLifetime;
+
     Timer _timer;
 };
 
