@@ -108,6 +108,7 @@ void RelayRegistration::push(int, Packet *p) {
 }
 
 void RelayRegistration::run_timer(Timer *timer) {
+
 	// lower remaining lifetime of pending requests
 	for(Vector<visitor_entry>::iterator it = _infobase->pending_requests.begin(); it != _infobase->pending_requests.end();) {
 		uint16_t lifetime = ntohs(it->remaining_lifetime);
@@ -148,6 +149,8 @@ void RelayRegistration::run_timer(Timer *timer) {
 		// remove from visitor list //TODO
 		//}
 	}
+
+	timer->schedule_after_msec(1000);
 }
 
 void RelayRegistration::relayRequest(Packet *p) {
@@ -252,13 +255,13 @@ void RelayRegistration::relayReply(Packet *p) {
 	}
 
 	// if no pending request with same home address as home address in reply, discard silently
-	visitor_entry entry;
+	Vector<visitor_entry>::iterator entry;
 	bool corresponding_request = false;
 	for(Vector<visitor_entry>::iterator it = _infobase->pending_requests.begin(); it != _infobase->pending_requests.end(); ++it) {
 		if(it->ip_src == IPAddress(rep_h->home_addr)) {
 			// pending request with same home address as in reply is found
 			corresponding_request = true;
-			entry = *it;
+			entry = it;
 			break;
 		}
 	}
@@ -269,7 +272,7 @@ void RelayRegistration::relayReply(Packet *p) {
 	}
 
 	// if lower 32 bits of Identification fields do not match, discard silently
-	if((uint32_t)(htonll(entry.id) & 0xFFFFFFFFLL) != (uint32_t)(rep_h->id & 0xFFFFFFFFLL)) {
+	if((uint32_t)(htonll(entry->id) & 0xFFFFFFFFLL) != (uint32_t)(rep_h->id & 0xFFFFFFFFLL)) {
 		p->kill();
 		return;
 	}
@@ -287,11 +290,9 @@ void RelayRegistration::relayReply(Packet *p) {
 			// put new visitor entry in visitor list
 			// (if it exists, old visitor list entry with same home address will be overwritten, i.e. updated)
 			// TODO does this hashmap support multiple values / key? if yes, erase these before assigning new entry
-			visitor_entry new_entry = entry;
+			visitor_entry new_entry = *entry;
 			new_entry.remaining_lifetime = rep_h->lifetime; // set to granted lifetime, so FA does not time out befor MN
 			_infobase->current_registrations.set(mn_home_addr, new_entry);
-			// delete pending request
-			_infobase->pending_requests.erase(&entry);
 		}
 		// if lifetime == 0 delete visitor entry & pending request
 		else {
@@ -299,14 +300,12 @@ void RelayRegistration::relayReply(Packet *p) {
 			// if present, remove current visitor list entry
 			const IPAddress mn_home_addr = IPAddress(rep_h->home_addr);
 			_infobase->current_registrations.erase(mn_home_addr);
-			// delete pending request
-			_infobase->pending_requests.erase(&entry);
 		}
-	} else {
-		// request was denied by the home agent
-		// delete pending request but do not change visitor entry
-		_infobase->pending_requests.erase(&entry);
+//	} else { // request was denied by the home agent
 	}
+
+	// delete pending request
+	_infobase->pending_requests.erase(entry);
 
 	// relay the reply to the mobile node
 	WritablePacket *packet = p->uniqueify();
@@ -325,7 +324,7 @@ void RelayRegistration::relayReply(Packet *p) {
 	// set UDP fields
 	uint16_t udp_src_prt = ntohs(udp_h->uh_sport);
 	udp_head->uh_sport = udp_h->uh_sport;
-	udp_head->uh_dport = htons(entry.udp_src);
+	udp_head->uh_dport = htons(entry->udp_src);
 
 	udp_head->uh_sum = htons(0);
 	udp_head->uh_sum = click_in_cksum_pseudohdr(click_in_cksum((unsigned char*)udp_head, packet_size - sizeof(click_ip)), ip_head, packet_size - sizeof(click_ip));
