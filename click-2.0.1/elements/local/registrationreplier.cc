@@ -6,6 +6,20 @@
 #include "registrationreplier.hh"
 #include "registrationrequester.hh"
 
+namespace {
+    uint64_t ntohll(uint64_t value)
+    {
+        int num = 42;
+        if (*(char *)&num == 42) {
+            uint32_t high_part = ntohl((uint32_t)(value >> 32));
+            uint32_t low_part = ntohl((uint32_t)(value & 0xFFFFFFFFLL));
+            return (((uint64_t)low_part) << 32) | high_part;
+        } else {
+            return value;
+        }
+    }
+}
+
 CLICK_DECLS
 
 IPAddress RegistrationReplier::_allMobileAgentsAddress = IPAddress("255.255.255.255");
@@ -54,7 +68,7 @@ void RegistrationReplier::push(int, Packet *p) {
                 MobileNodeInfo info; //TODO check if all info correct
                 info.address = IPAddress(req_rh->home_addr);
                 info.careOfAddress = IPAddress(req_rh->co_addr);
-                info.identification = req_rh->id;
+                info.identification = ntohll(req_rh->id);
                 info.remainingLifetime = req_rh->lifetime;
                 _infobase->mobileNodesInfo.push_back(info);
             }

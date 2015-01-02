@@ -7,6 +7,32 @@
 #include "registrationrequester.hh"
 #include "registrationreplier.hh"
 
+namespace {
+    uint64_t ntohll(uint64_t value)
+    {
+        int num = 42;
+        if (*(char *)&num == 42) {
+            uint32_t high_part = ntohl((uint32_t)(value >> 32));
+            uint32_t low_part = ntohl((uint32_t)(value & 0xFFFFFFFFLL));
+            return (((uint64_t)low_part) << 32) | high_part;
+        } else {
+            return value;
+        }
+    }
+
+    uint64_t htonll(uint64_t value)
+    {
+        int num = 42;
+        if (*(char *)&num == 42) {
+            uint32_t high_part = htonl((uint32_t)(value >> 32));
+            uint32_t low_part = htonl((uint32_t)(value & 0xFFFFFFFFLL));
+            return (((uint64_t)low_part) << 32) | high_part;
+        } else {
+            return value;
+        }
+    }
+}
+
 CLICK_DECLS
 
 RelayRegistration::RelayRegistration(): _timer(this) {}
@@ -94,7 +120,7 @@ void RelayRegistration::run_timer(Timer *timer) {
 				in_addr ip_src = it->ip_dst.in_addr(); // IP source of reply copied from destination address of corresponding Request
 				in_addr ip_dst = it->ip_src.in_addr(); // IP destination = home address from corresponding Request
 				uint16_t udp_dst = it->udp_src; // copied from UDP source port of corresponding Request
-				uint64_t id = it->id;
+				uint64_t id = htonll(it->id);
 				in_addr home_agent = it->home_agent.in_addr();
 				Packet *packet = createReply(code, ip_src, ip_dst, udp_dst, id, home_agent);
 				output(0).push(packet);
@@ -177,7 +203,7 @@ void RelayRegistration::relayRequest(Packet *p) {
 	entry.ip_dst = ip_h->ip_dst;
 	entry.udp_src = ntohs(udp_h->uh_sport);
 	entry.home_agent = IPAddress(req_h->home_agent);
-	entry.id = req_h->id;
+	entry.id = ntohll(req_h->id);
 	entry.requested_lifetime = ntohs(req_h->lifetime);
 	entry.remaining_lifetime = ntohs(req_h->lifetime);
 	_infobase->pending_requests.push_back(entry);
@@ -240,7 +266,7 @@ void RelayRegistration::relayReply(Packet *p) {
 	}
 
 	// if lower 32 bits of Identification fields do not match, discard silently
-	if((uint32_t)entry.id != (uint32_t)rep_h->id) { //TODO ok to cast like this?
+	if((uint32_t)(htonll(entry.id) & 0xFFFFFFFFLL) != (uint32_t)(rep_h->id & 0xFFFFFFFFLL)) {
 		p->kill();
 		return;
 	}
