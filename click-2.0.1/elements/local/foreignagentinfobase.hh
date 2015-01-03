@@ -34,9 +34,6 @@ public:
     // TODO care of address
 
     IPAddress address;
-
-    // TODO maximum number of pending registrations? (optional)
-
 };
 
 CLICK_ENDDECLS

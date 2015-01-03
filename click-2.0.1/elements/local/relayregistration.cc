@@ -35,7 +35,7 @@ namespace {
 
 CLICK_DECLS
 
-RelayRegistration::RelayRegistration(): _timer(this) {}
+RelayRegistration::RelayRegistration(): _timer(this), _maxRegistrations(-1) {}
 
 RelayRegistration::~RelayRegistration() {}
 
@@ -43,6 +43,7 @@ int RelayRegistration::configure(Vector<String> &conf, ErrorHandler *errh) {
 	if(cp_va_kparse(conf, this, errh,
 			"INFOBASE", cpkP + cpkM, cpElement, &_infobase,
 			"PRIVATE_IP", cpkM, cpIPAddress, &_privateIP,
+			"MAX_REGISTRATIONS", cpkN, cpInteger, &_maxRegistrations,
 			cpEnd) < 0) return -1;
 
 	_timer.initialize(this);
@@ -168,6 +169,21 @@ void RelayRegistration::relayRequest(Packet *p) {
 	if ((click_in_cksum_pseudohdr(click_in_cksum((unsigned char*)udp_h, packet_size - sizeof(click_ip)), ip_h, packet_size - sizeof(click_ip)) != 0)
 			&& (ntohs(udp_h->uh_sum) != 0))
 	{
+		p->kill();
+		return;
+	}
+
+	// if FA already has maximum number of MNs registered, reject with code 66 (insufficient resources)
+	int num_current_registrations = _infobase->current_registrations.size();
+	if(_maxRegistrations > -1 && num_current_registrations >= _maxRegistrations) {
+		uint8_t code = 66;
+		in_addr ip_src = ip_h->ip_dst;
+		in_addr ip_dst = ip_h->ip_src;
+		uint16_t udp_dst = udp_h->uh_sport;
+		uint64_t identification = req_h->id;
+		in_addr home_agent = *(struct in_addr *)&req_h->home_agent;
+		Packet *packet = createReply(code, ip_src, ip_dst, udp_dst, identification, home_agent);
+		output(0).push(packet);
 		p->kill();
 		return;
 	}

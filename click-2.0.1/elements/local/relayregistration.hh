@@ -30,6 +30,7 @@ private:
     ForeignAgentInfobase *_infobase;
     IPAddress _privateIP;
     Timer _timer;
+    int _maxRegistrations; // optional, specifies the number of registrations a FA can keep at any time
 
     void relayRequest(Packet *p);
     void relayReply(Packet *p);
