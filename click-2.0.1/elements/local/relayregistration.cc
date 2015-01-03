@@ -3,34 +3,35 @@
 #include <click/error.hh>
 #include <clicknet/udp.h>
 #include <clicknet/ether.h>
+#include <clicknet/icmp.h>
 #include "relayregistration.hh"
 #include "registrationrequester.hh"
 #include "registrationreplier.hh"
 
 namespace {
-    uint64_t ntohll(uint64_t value)
-    {
-        int num = 42;
-        if (*(char *)&num == 42) {
-            uint32_t high_part = ntohl((uint32_t)(value >> 32));
-            uint32_t low_part = ntohl((uint32_t)(value & 0xFFFFFFFFLL));
-            return (((uint64_t)low_part) << 32) | high_part;
-        } else {
-            return value;
-        }
-    }
+uint64_t ntohll(uint64_t value)
+{
+	int num = 42;
+	if (*(char *)&num == 42) {
+		uint32_t high_part = ntohl((uint32_t)(value >> 32));
+		uint32_t low_part = ntohl((uint32_t)(value & 0xFFFFFFFFLL));
+		return (((uint64_t)low_part) << 32) | high_part;
+	} else {
+		return value;
+	}
+}
 
-    uint64_t htonll(uint64_t value)
-    {
-        int num = 42;
-        if (*(char *)&num == 42) {
-            uint32_t high_part = htonl((uint32_t)(value >> 32));
-            uint32_t low_part = htonl((uint32_t)(value & 0xFFFFFFFFLL));
-            return (((uint64_t)low_part) << 32) | high_part;
-        } else {
-            return value;
-        }
-    }
+uint64_t htonll(uint64_t value)
+{
+	int num = 42;
+	if (*(char *)&num == 42) {
+		uint32_t high_part = htonl((uint32_t)(value >> 32));
+		uint32_t low_part = htonl((uint32_t)(value & 0xFFFFFFFFLL));
+		return (((uint64_t)low_part) << 32) | high_part;
+	} else {
+		return value;
+	}
+}
 }
 
 CLICK_DECLS
@@ -57,34 +58,43 @@ void RelayRegistration::push(int, Packet *p) {
 	click_ip *ip_h = (click_ip *)(eth_h + 1);
 	uint32_t packet_size = p->length() - sizeof(click_ether);
 
-	// check if ICMP error message //TODO
+	// check if ICMP error message
 	if (ip_h->ip_p == 1) {
 		click_icmp *icmp_h = (click_icmp *)(ip_h + 1);
-		/*uint8_t type = icmp_h->icmp_type;
-		// if HA unreachable, send Reply to MN denying request
-		if(type == 3) {
+		click_ip *old_ip_h = (click_ip *)(icmp_h + 1); // IP header of packet that caused the error
+		uint8_t type = icmp_h->icmp_type;
+		// if HA unreachable, send Reply to MNs that sent request to this HA, denying request
+		if (type == 3) {
+			IPAddress home_agent = IPAddress(old_ip_h->ip_dst);
 			uint8_t icmp_code = icmp_h->icmp_code;
-			//ip src = FA address
-			//ip dst = mn addresss??
-			//udp_dst = ???
-			//id = ???
-			//homeagent = ???
-			if(icmp_code == 0) {
-				// home network unreachable
-				// send reply with code 80 TODO
-				//Packet *packet = createReply(code, ip_src, ip_dst, udp_dst, identification, home_agent);
-
-			} else if(icmp_code == 1) {
-				// home agent host unreachable
-				// send reply with code 81 TODO
-			} else if(icmp_code == 3) {
-				// home agent port unreachable TODO
-				// send reply with code 82
-			} else {
-				// other ICMP error TODO
-				// send reply with code 88
+			uint8_t code;
+			switch(icmp_code) {
+			case 0: // home network unreachable
+				code = 80;
+				break;
+			case 1: // home agent host unreachable
+				code = 81;
+				break;
+			case 3: // home agent port unreachable
+				code = 82;
+				break;
+			default: // other ICMP error
+				code = 88;
+				break;
 			}
-		}*/
+
+			for(Vector<visitor_entry>::iterator it = _infobase->pending_requests.begin(); it != _infobase->pending_requests.end(); ++it) {
+				if(it->home_agent == home_agent) {
+					// send reply
+					in_addr ip_src = it->ip_dst;
+					in_addr ip_dst = it->ip_src;
+					uint16_t udp_dst = it->udp_src;
+					uint64_t id = it->id;
+					Packet *packet = createReply(code, ip_src, ip_dst, udp_dst, id, home_agent.in_addr());
+					output(0).push(packet);
+				}
+			}
+		}
 	}
 	else {
 		click_udp *udp_h = (click_udp *)(ip_h + 1);
@@ -97,7 +107,7 @@ void RelayRegistration::push(int, Packet *p) {
 			}
 		}
 		// relay registration reply
-		else if(packet_size = sizeof(click_ip) + sizeof(click_udp) + sizeof(registration_reply_header)) {
+		else if(packet_size == sizeof(click_ip) + sizeof(click_udp) + sizeof(registration_reply_header)) {
 			registration_reply_header *rep_h = (registration_reply_header*)(udp_h + 1);
 			if(rep_h->type == 3) {
 				relayReply(p);
@@ -131,7 +141,7 @@ void RelayRegistration::run_timer(Timer *timer) {
 				it = _infobase->pending_requests.erase(it);
 			}
 			else
-			    ++it;
+				++it;
 		}
 		else {
 			// remove pending request when lifetime has expired
@@ -161,8 +171,6 @@ void RelayRegistration::relayRequest(Packet *p) {
 	click_udp *udp_h = (click_udp *)(ip_h + 1);
 	registration_request_header *req_h = (registration_request_header *)(udp_h + 1);
 	uint32_t packet_size = p->length() - sizeof(click_ether);
-
-	// check if home address does not belong to network interface of foreign agent //TODO
 
 	// If the UDP checksum is wrong then discard the packet silently.
 	// The checksum is still part of the packet, which is why we check for not null, instead of checking whether what we calculate equals the checksum.
@@ -316,7 +324,7 @@ void RelayRegistration::relayReply(Packet *p) {
 			const IPAddress mn_home_addr = IPAddress(rep_h->home_addr);
 			_infobase->current_registrations.erase(mn_home_addr);
 		}
-//	} else { // request was denied by the home agent
+		//	} else { // request was denied by the home agent
 	}
 
 	// delete pending request
