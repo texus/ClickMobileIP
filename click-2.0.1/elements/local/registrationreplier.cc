@@ -65,7 +65,7 @@ void RegistrationReplier::push(int, Packet *p) {
             }
             else
             {
-                MobileNodeInfo info; //TODO check if all info correct
+                MobileNodeInfo info;
                 info.address = IPAddress(req_rh->home_addr);
                 info.careOfAddress = IPAddress(req_rh->co_addr);
                 info.identification = ntohll(req_rh->id);
@@ -167,8 +167,6 @@ uint8_t RegistrationReplier::check_acceptability(Packet *packet) {
     if (req_rh->home_agent == _allMobileAgentsAddress.addr()) {
     	return 136;
     }
-
-    // if something else is wrong, return 'Reason unspecified' code //TODO when?
 
     return 1; // If request is accepted, return code 1, since simultaneous bindings are not supported
 }

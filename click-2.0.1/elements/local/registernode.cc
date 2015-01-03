@@ -142,11 +142,6 @@ void RegisterNode::push(int, Packet *p) {
 
         // remove pending request
         _infobase->pending.erase(most_recent);
-
-        if(code == 136) {
-            // if request was denied because home agent address was unknown, error can be 'repaired'
-            // TODO set home agent address in infobase & retransmit request
-        }
     }
 
     p->kill();
