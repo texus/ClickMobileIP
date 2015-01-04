@@ -22,7 +22,7 @@ $private_address, $public_address, $default_gateway
     // Shared IP input path and routing table
     ip :: Strip(14)
         -> CheckIPHeader
-        -> regs::IPClassifier(src or dst udp port 434, -)[1]
+        -> regs::IPClassifier(src or dst udp port 434 or icmp type unreachable, -)[1]
         -> rt :: StaticIPLookup(
             $private_address:ip/32 0,
             $public_address:ip/32 0,
@@ -71,7 +71,7 @@ $private_address, $public_address, $default_gateway
     regs[0]
         -> Unstrip(14)
         -> relayRegistration :: RelayRegistration(infobase, PRIVATE_IP $private_address)[0]
-        -> Strip(14)
+        -> MarkIPHeader(0)
         -> SetIPChecksum
         -> [0]arpq0
 
