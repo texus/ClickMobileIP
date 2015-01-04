@@ -153,15 +153,14 @@ void RelayRegistration::run_timer(Timer *timer) {
 	}
 
 	// lower remaining lifetime for current registrations
-	for(HashTable<IPAddress, visitor_entry>::iterator it = _infobase->current_registrations.begin();
-			it != _infobase->current_registrations.end(); ++it) {
-		//if(it->remaining_lifetime > 1) {
-		//    --(it->remainig_lifetime);
-		//}
-		// else {
-
-		// remove from visitor list //TODO
-		//}
+	for(HashTable<IPAddress, visitor_entry>::iterator it = _infobase->current_registrations.begin(); it != _infobase->current_registrations.end();) {
+        if(it->remaining_lifetime > 0) {
+            --(it->remainig_lifetime);
+            ++it;
+        }
+        else {
+            it = _infobase->current_registrations.erase(it);
+        }
 	}
 
 	timer->schedule_after_msec(1000);
