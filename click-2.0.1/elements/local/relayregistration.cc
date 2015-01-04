@@ -154,8 +154,8 @@ void RelayRegistration::run_timer(Timer *timer) {
 
 	// lower remaining lifetime for current registrations
 	for(HashTable<IPAddress, visitor_entry>::iterator it = _infobase->current_registrations.begin(); it != _infobase->current_registrations.end();) {
-        if(it->remaining_lifetime > 0) {
-            --(it->remainig_lifetime);
+        if(it->second.remaining_lifetime > 0) {
+            --(it->second.remaining_lifetime);
             ++it;
         }
         else {
