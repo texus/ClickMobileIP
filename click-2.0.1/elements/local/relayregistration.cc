@@ -83,7 +83,7 @@ void RelayRegistration::push(int, Packet *p) {
 				break;
 			}
 
-			for(Vector<visitor_entry>::iterator it = _infobase->pending_requests.begin(); it != _infobase->pending_requests.end(); ++it) {
+			for(Vector<visitor_entry>::iterator it = _infobase->pending_requests.begin(); it != _infobase->pending_requests.end();) {
 				if(it->home_agent == home_agent) {
 					// send reply
 					in_addr ip_src = it->ip_dst;
@@ -91,8 +91,11 @@ void RelayRegistration::push(int, Packet *p) {
 					uint16_t udp_dst = it->udp_src;
 					uint64_t id = it->id;
 					Packet *packet = createReply(code, ip_src, ip_dst, udp_dst, id, home_agent.in_addr());
+					_infobase->pending_requests.erase(it);
 					output(0).push(packet);
 				}
+				else
+				    ++it;
 			}
 		}
 	}
@@ -353,6 +356,7 @@ void RelayRegistration::relayReply(Packet *p) {
 	udp_head->uh_sum = click_in_cksum_pseudohdr(click_in_cksum((unsigned char*)udp_head, packet_size - sizeof(click_ip)), ip_head, packet_size - sizeof(click_ip));
 
 	// relay to mobile node
+	packet->pull(14);
 	output(0).push(packet);
 }
 
@@ -386,8 +390,8 @@ Packet* RelayRegistration::createReply(uint8_t code, in_addr ip_src, in_addr ip_
 
 	// add UDP header
 	click_udp *udp_head = (click_udp*)(ip_head + 1);
-	udp_head->uh_sport = 434;
-	udp_head->uh_dport = udp_dst;
+	udp_head->uh_sport = htons(434);
+	udp_head->uh_dport = htons(udp_dst);
 	uint16_t len = packet->length() - sizeof(click_ip);
 	udp_head->uh_ulen = htons(len);
 
