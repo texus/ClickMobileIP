@@ -29,12 +29,19 @@ RegistrationRequester::RegistrationRequester(): _timer(this), _default_lifetime(
 
 RegistrationRequester::~RegistrationRequester() {}
 
-int RegistrationRequester::configure(Vector<String>& conf, ErrorHandler *errh) {
+int RegistrationRequester::configure(Vector<String>& conf, ErrorHandler *errh)
+{
+    bool simultaneousBindingsGiven;
+
     if (cp_va_kparse(conf, this, errh,
             "INFOBASE", cpkP + cpkM, cpElement, &_infobase,
 			"DEFAULT_LIFETIME", cpkP, cpInteger, &_default_lifetime,
+			"SIMULTANEOUS_BINDINGS", cpkC, &simultaneousBindingsGiven, cpBool, &_simultaneousBindings,
             cpEnd) < 0)
         return -1;
+
+    if (!simultaneousBindingsGiven)
+        _simultaneousBindings = false;
 
     _timer.initialize(this);
     _timer.schedule_after_msec(1000);
@@ -163,7 +170,7 @@ Packet* RegistrationRequester::createRequest(in_addr ip_dst, uint16_t lifetime, 
     // add Mobile IP fields
     registration_request_header *req_head = (registration_request_header*)(udp_head+1);
     req_head->type = 1; // Registration Request
-    req_head->flags = (0 << 7)  // Simultaneous bindings (not requested by our mobile nodes)
+    req_head->flags = (_simultaneousBindings << 7)  // Simultaneous bindings
                     + (0 << 6)  // Broadcast datagrams, MN must not set this bit, since it cannot decapsulate datagrams itself
                     + (0 << 5)  // Decapsulation by mobile node: only when registering co-located COA (not supported)
                     + (0 << 4)  // Minimal encapsulation (not requested by our mobile nodes)

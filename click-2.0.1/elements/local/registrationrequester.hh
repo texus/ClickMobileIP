@@ -33,6 +33,8 @@ class RegistrationRequester : public Element {
         uint16_t _default_lifetime; // default ICMP Router Advertismeent Lifetime, defaults to 1800 seconds
         Timer _timer;
 
+        bool _simultaneousBindings;
+
         Packet* createRequest(in_addr ip_dst, uint16_t lifetime, uint32_t co_addr);
 };
 
