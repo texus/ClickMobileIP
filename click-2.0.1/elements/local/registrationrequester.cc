@@ -94,7 +94,8 @@ void RegistrationRequester::run_timer(Timer *timer) {
         if(lifetime > 0) {
             --lifetime;
             it->remaining_lifetime = htons(lifetime);
-            // when no reply has been received within reasonable time, another registration request MAY be transmitted! //TODO
+
+            // when no reply has been received within reasonable time, another registration request MAY be transmitted!
             //int max_interval = it->requested_lifetime;
             //int min_interval = max(message_sizes + 2 * RTT to home agent + 100 ms + 200 ms, 1s);
             //int time_to_next_ret = min(max_interval, 2 * interval)

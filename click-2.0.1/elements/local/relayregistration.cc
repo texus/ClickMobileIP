@@ -303,8 +303,6 @@ void RelayRegistration::relayReply(Packet *p) {
 		return;
 	}
 
-	// TODO what is a poorly formed reply? how to handle it?
-
 	uint8_t code = rep_h->code;
 	if(code == 0 || code == 1) {
 		// the request was accepted

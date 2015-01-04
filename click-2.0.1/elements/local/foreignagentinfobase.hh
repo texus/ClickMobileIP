@@ -31,8 +31,6 @@ public:
     Vector<visitor_entry> pending_requests;
     HashTable<IPAddress, visitor_entry> current_registrations;
 
-    // TODO care of address
-
     IPAddress address;
 };
 
